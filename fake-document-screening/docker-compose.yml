@@ -1,0 +1,77 @@
+# =============================================================================
+# VeriLens — Docker Compose (Development)
+# =============================================================================
+# This file defines the service topology for local development.
+# Dockerfiles for each service will be created in Phase 1.
+# =============================================================================
+
+version: "3.9"
+
+services:
+  # ---------- PostgreSQL ----------
+  postgres:
+    image: postgres:16-alpine
+    container_name: verilens-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-verilens_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-verilens}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-verilens_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------- Spring Boot Backend ----------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: verilens-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-verilens}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-verilens_user}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      JWT_SECRET: ${JWT_SECRET:-changeme}
+      AI_SERVICE_URL: http://ai-service:8000
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+
+  # ---------- Python AI Service ----------
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: verilens-ai-service
+    restart: unless-stopped
+    environment:
+      AI_SERVICE_API_KEY: ${AI_SERVICE_API_KEY:-changeme}
+    ports:
+      - "8000:8000"
+
+  # ---------- React Frontend ----------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: verilens-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_BASE_URL: http://localhost:${SERVER_PORT:-8080}/api
+
+volumes:
+  postgres_data:
