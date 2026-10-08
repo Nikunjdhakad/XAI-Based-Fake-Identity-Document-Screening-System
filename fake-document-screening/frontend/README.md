@@ -1,33 +1,32 @@
-# VeriLens — Frontend
+# React + TypeScript + Vite
 
-React + TypeScript + Vite application.
+This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
-## Status
+Currently, two official plugins are available:
 
-**Not yet initialized.** The React project will be scaffolded in Phase 1.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## Responsibilities
+## React Compiler
 
-- Authentication screens (login / register)
-- Dashboard with recent screenings and risk distribution
-- Document upload workspace
-- Analysis progress view
-- Results and evidence display
-- Suspicious-region viewer
-- Screening history with search/filter
-- Document detail and audit trail
-- Report download
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Technology
+## Expanding the Oxlint configuration
 
-| Tool        | Purpose            |
-| ----------- | ------------------ |
-| React 18+   | UI framework       |
-| TypeScript   | Type safety        |
-| Vite         | Build tool         |
-| CSS Modules  | Scoped styling     |
+If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
 
-## Communication
+```json
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "oxc"],
+  "options": {
+    "typeAware": true
+  },
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+  }
+}
+```
 
-The frontend communicates **only** with the Spring Boot backend via REST/JSON.  
-It must **never** call the Python AI service directly.
+See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.

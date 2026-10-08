@@ -1,0 +1,58 @@
+# =============================================================================
+# VeriLens Backend — Application Configuration
+# =============================================================================
+
+spring:
+  application:
+    name: verilens-backend
+
+  # ---- Database ----
+  datasource:
+    url: jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:verilens}
+    username: ${DATABASE_USERNAME:verilens_user}
+    password: ${DATABASE_PASSWORD:changeme}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # ---- File Upload ----
+  servlet:
+    multipart:
+      max-file-size: ${MAX_UPLOAD_SIZE_MB:20}MB
+      max-request-size: ${MAX_UPLOAD_SIZE_MB:20}MB
+
+# ---- Server ----
+server:
+  port: ${SERVER_PORT:8080}
+
+# ---- JWT ----
+verilens:
+  jwt:
+    secret: ${JWT_SECRET:default-dev-secret-change-in-production}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+
+  # ---- AI Service ----
+  ai-service:
+    url: ${AI_SERVICE_URL:http://localhost:8000}
+    api-key: ${AI_SERVICE_API_KEY:dev-api-key}
+    timeout-seconds: 120
+
+  # ---- File Storage ----
+  storage:
+    upload-dir: ${UPLOAD_DIRECTORY:./uploads}
+
+# ---- Logging ----
+logging:
+  level:
+    com.verilens: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

@@ -1,0 +1,33 @@
+# =============================================================================
+# VeriLens Backend — Test Configuration
+# =============================================================================
+# Uses H2 in-memory database for tests.
+
+spring:
+  application:
+    name: verilens-backend-test
+
+  datasource:
+    url: jdbc:h2:mem:verilens_test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+verilens:
+  jwt:
+    secret: test-secret-key-for-unit-tests-only-not-production
+    expiration-ms: 86400000
+  ai-service:
+    url: http://localhost:9999
+    api-key: test-api-key
+    timeout-seconds: 5
+  storage:
+    upload-dir: ./test-uploads

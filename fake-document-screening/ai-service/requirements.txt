@@ -1,0 +1,10 @@
+# =============================================================================
+# VeriLens AI Service — Python Dependencies
+# =============================================================================
+# Phase 1: Minimal dependencies for the FastAPI health endpoint.
+# AI/CV libraries will be added in their respective phases (4–9).
+# =============================================================================
+
+fastapi==0.115.0
+uvicorn[standard]==0.31.0
+python-multipart==0.0.12

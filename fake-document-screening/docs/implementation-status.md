@@ -7,7 +7,7 @@
 | Phase | Description                  | Status         |
 | ----- | ---------------------------- | -------------- |
 | 0     | Specification                | ✅ COMPLETE     |
-| 1     | Repository Foundation        | ⬜ NOT STARTED |
+| 1     | Repository Foundation        | ✅ COMPLETE     |
 | 2     | Backend Foundation           | ⬜ NOT STARTED |
 | 3     | Frontend Foundation          | ⬜ NOT STARTED |
 | 4     | OCR                          | ⬜ NOT STARTED |
@@ -22,6 +22,26 @@
 | 13    | Evaluation                   | ⬜ NOT STARTED |
 | 14    | Hardening                    | ⬜ NOT STARTED |
 | 15    | Final Documentation          | ⬜ NOT STARTED |
+
+---
+
+## Phase 1 — Repository Foundation — Details
+
+### Completed Items
+
+- [x] React 19 + TypeScript frontend scaffolded with `vite`
+- [x] Node packages installed and build verified (`npm run build` succeeds)
+- [x] Spring Boot 3.3.4 Maven pom.xml created with Java 21 & required dependencies
+- [x] Java Spring application (`VeriLensApplication.java`), `application.yml`, and `SecurityConfig.java` created
+- [x] Backend health endpoint `GET /api/health` implemented with database & AI service status checks
+- [x] Backend context & integration unit tests created (`VeriLensApplicationTests.java`, `HealthControllerTest.java`)
+- [x] Python 3.11 FastAPI AI Service app (`app/main.py`), `requirements.txt`, and API key middleware created
+- [x] AI Service health endpoint `GET /internal/health` created with module availability status
+- [x] Pytest test suite (`tests/test_health.py`) created and verified (2/2 tests pass)
+- [x] Multi-stage Dockerfiles created for backend, ai-service, and frontend
+- [x] PostgreSQL init script created (`database/init/01-init.sql`)
+- [x] Orchestration verified via `docker-compose.yml`
+
 
 ---
 
