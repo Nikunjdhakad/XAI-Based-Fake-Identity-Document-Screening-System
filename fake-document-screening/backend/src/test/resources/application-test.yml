@@ -2,13 +2,14 @@
 # VeriLens Backend — Test Configuration
 # =============================================================================
 # Uses H2 in-memory database for tests.
+# Flyway is disabled — Hibernate DDL auto creates schema from entities.
 
 spring:
   application:
     name: verilens-backend-test
 
   datasource:
-    url: jdbc:h2:mem:verilens_test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    url: jdbc:h2:mem:verilens_test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL
     username: sa
     password:
     driver-class-name: org.h2.Driver
@@ -20,10 +21,14 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
+    open-in-view: false
+
+  flyway:
+    enabled: false
 
 verilens:
   jwt:
-    secret: test-secret-key-for-unit-tests-only-not-production
+    secret: test-secret-key-for-unit-tests-only-not-production-must-be-at-least-64-characters-long-for-hs512
     expiration-ms: 86400000
   ai-service:
     url: http://localhost:9999
@@ -31,3 +36,5 @@ verilens:
     timeout-seconds: 5
   storage:
     upload-dir: ./test-uploads
+    allowed-extensions: pdf,jpg,jpeg,png
+    allowed-mime-types: application/pdf,image/jpeg,image/png

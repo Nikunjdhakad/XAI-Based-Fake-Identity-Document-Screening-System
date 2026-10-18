@@ -28,4 +28,11 @@ class HealthControllerTest {
                 .andExpect(jsonPath("$.database").exists())
                 .andExpect(jsonPath("$.aiService").exists());
     }
+
+    @Test
+    void healthEndpointIsPublic_noAuthRequired() throws Exception {
+        // Health endpoint must be accessible without JWT
+        mockMvc.perform(get("/api/health"))
+                .andExpect(status().isOk());
+    }
 }

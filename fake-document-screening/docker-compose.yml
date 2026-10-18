@@ -39,11 +39,14 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-verilens}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-verilens_user}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${POSTGRES_DB:-verilens}
+      DATABASE_USERNAME: ${POSTGRES_USER:-verilens_user}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
       JWT_SECRET: ${JWT_SECRET:-changeme}
       AI_SERVICE_URL: http://ai-service:8000
+      AI_SERVICE_API_KEY: ${AI_SERVICE_API_KEY:-changeme}
     ports:
       - "${SERVER_PORT:-8080}:8080"
 

@@ -10,6 +10,7 @@ class VeriLensApplicationTests {
 
     @Test
     void contextLoads() {
-        // Verifies that the Spring application context starts without errors.
+        // Verifies that the Spring application context starts without errors
+        // including all Phase 2 entities, repositories, services, and security config.
     }
 }
