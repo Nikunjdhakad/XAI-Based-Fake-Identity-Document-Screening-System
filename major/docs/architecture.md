@@ -1,8 +1,8 @@
 # VeriLens — Architecture Specification
 
 **Version:** 0.1.0  
-**Phase:** 0 — Specification  
-**Last updated:** 2026-10-07
+**Phase:** 2 — Backend Foundation  
+**Last updated:** 2026-10-20
 
 ---
 

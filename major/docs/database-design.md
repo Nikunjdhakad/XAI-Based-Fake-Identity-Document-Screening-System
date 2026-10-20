@@ -1,8 +1,8 @@
 # VeriLens — Database Design
 
 **Version:** 0.1.0  
-**Phase:** 0 — Specification  
-**Last updated:** 2026-10-07
+**Phase:** 2 — Backend Foundation  
+**Last updated:** 2026-10-20
 
 ---
 
@@ -316,8 +316,9 @@ Match status values: `MATCH`, `MISMATCH`, `NOT_APPLICABLE`
 
 ## 6. Implementation Notes
 
-- Tables will be created via JPA entity mapping + Hibernate DDL generation in development
-- Production migrations will use Flyway or Liquibase (decision pending — see [decisions.md](decisions.md))
+- **Tables 1–7 (roles, users, documents, document_files, analysis_tasks, audit_logs) are now implemented** via Flyway migrations V1–V7 (see `backend/src/main/resources/db/migration/`). The entities are mapped via JPA with `ddl-auto: validate` in production.
+- Tests use H2 in-memory with `MODE=PostgreSQL` and Hibernate `ddl-auto: create-drop` (Flyway disabled). See [decisions.md](decisions.md) DEC-009 for rationale.
 - JSONB columns are used for semi-structured module output that varies per module
 - All result tables link back to `AnalysisJob` for traceability
 - The schema will be refined as each module is implemented (Phases 4–9)
+- Remaining tables (OcrResult, ForensicResult, MetadataResult, IdentityConsistencyResult, FaceVerificationResult, AiManipulationResult, Evidence, SuspiciousRegion, RiskAssessment, Report) will be created in later phases

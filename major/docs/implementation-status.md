@@ -1,6 +1,6 @@
 # VeriLens — Implementation Status
 
-**Last updated:** 2026-10-07
+**Last updated:** 2026-10-20
 
 ---
 
@@ -8,7 +8,7 @@
 | ----- | ---------------------------- | -------------- |
 | 0     | Specification                | ✅ COMPLETE     |
 | 1     | Repository Foundation        | ✅ COMPLETE     |
-| 2     | Backend Foundation           | ⬜ NOT STARTED |
+| 2     | Backend Foundation           | ✅ COMPLETE |
 | 3     | Frontend Foundation          | ⬜ NOT STARTED |
 | 4     | OCR                          | ⬜ NOT STARTED |
 | 5     | Metadata Analysis            | ⬜ NOT STARTED |
@@ -22,6 +22,38 @@
 | 13    | Evaluation                   | ⬜ NOT STARTED |
 | 14    | Hardening                    | ⬜ NOT STARTED |
 | 15    | Final Documentation          | ⬜ NOT STARTED |
+
+---
+
+## Phase 2 — Backend Foundation — Details
+
+### Completed Items
+
+- [x] User entity with UUID primary key, bcrypt password hashing via Spring Security `BCryptPasswordEncoder`
+- [x] Authentication: `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me` endpoints
+- [x] JWT token issuance and validation via `JwtTokenProvider` (HS256, 24h expiry)
+- [x] JWT security filter (`JwtAuthenticationFilter`) extracting Bearer tokens and setting Spring Security context
+- [x] `UserDetailsServiceImpl` loading users from database with role-based authorities
+- [x] Roles: `USER`, `ANALYST`, `ADMIN` seeded via Flyway migration V7 (test profile uses `TestDataInitializer`)
+- [x] Document entity with file metadata, status lifecycle (`UPLOADED` → `QUEUED` → …)
+- [x] Document upload API (`POST /api/documents`) with file validation:
+  - Extension whitelist (PDF, JPG, JPEG, PNG)
+  - MIME type whitelist
+  - Size limit (20 MB default)
+  - Safe UUID-based filenames to prevent path traversal and collisions
+  - Path traversal protection in `StorageService`
+- [x] Reference face upload support (optional `referenceFace` multipart field)
+- [x] PostgreSQL integration via Flyway migrations V1–V7:
+  - V1: roles, V2: users, V3: documents, V4: document_files, V5: analysis_tasks, V6: audit_logs, V7: seed default roles
+- [x] Audit logging service (`AuditService`) recording: register, login, upload, delete, analysis events
+- [x] Analysis task lifecycle: create (`POST /api/documents/{id}/analysis`), status (`GET …/status`), get (`GET …/analysis`) — lifecycle only, no AI processing in Phase 2
+- [x] Global exception handler (`GlobalExceptionHandler`) for consistent `ErrorResponse` JSON on validation and business errors
+- [x] CORS configuration allowing frontend origins (localhost:3000, localhost:5173)
+- [x] Integration tests:
+  - `AuthControllerTest` — 12 tests: registration, login, protected endpoints, validation, duplicate detection
+  - `DocumentControllerTest` — 9 tests: upload, retrieval, deletion, access control, file type validation
+  - `HealthControllerTest` — 2 tests: health endpoint, public accessibility
+- [x] All 24 tests passing (`mvn test` — BUILD SUCCESS)
 
 ---
 

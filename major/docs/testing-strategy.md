@@ -1,8 +1,8 @@
 # VeriLens — Testing Strategy
 
 **Version:** 0.1.0  
-**Phase:** 0 — Specification  
-**Last updated:** 2026-10-07
+**Phase:** 2 — Backend Foundation  
+**Last updated:** 2026-10-20
 
 ---
 
@@ -189,3 +189,20 @@ CI pipeline will be configured if/when GitHub repository is set up.
 | 12    | Report generation tests                                |
 | 13    | Full ML evaluation suite                               |
 | 14    | Security tests, performance tests, edge-case tests     |
+
+---
+
+## 10. Phase 2 Testing — Complete
+
+Phase 2 backend testing is complete with the following integration test suites:
+
+| Test Class | Tests | Coverage |
+| ---------- | ----- | -------- |
+| `AuthControllerTest` | 12 | Registration, login, JWT-protected endpoints, validation errors, duplicate username/email |
+| `DocumentControllerTest` | 9 | Upload (PDF/JPEG/PNG), file type validation, listing, retrieval, deletion, cross-user access control |
+| `HealthControllerTest` | 2 | Health endpoint response, public accessibility without auth |
+| `VeriLensApplicationTests` | 1 | Spring context loads successfully |
+
+**Total: 24 tests, all passing.**
+
+Tests use `@SpringBootTest` with `@ActiveProfiles("test")` running against H2 in-memory database with PostgreSQL compatibility mode. See [decisions.md](decisions.md) DEC-009 for the test database rationale.

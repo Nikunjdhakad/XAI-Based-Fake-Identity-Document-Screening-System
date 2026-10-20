@@ -1,6 +1,6 @@
 # VeriLens — Decision Log
 
-**Last updated:** 2026-10-07
+**Last updated:** 2026-10-20
 
 ---
 
@@ -155,15 +155,59 @@ This document records architectural and technical decisions made during developm
 
 **Date:** 2026-10-07  
 **Phase:** 0  
-**Status:** PENDING
+**Status:** ACCEPTED
 
 **Context:** Database schema changes need to be tracked and applied reproducibly.
 
-**Decision:** To be decided in Phase 1 or Phase 2. Options: Flyway, Liquibase, or Hibernate DDL generation (dev only).
+**Decision:** Use Flyway for database migrations. Flyway migrations V1–V7 have been implemented for Phase 2 (roles, users, documents, document_files, analysis_tasks, audit_logs, seed roles).
 
-**Rationale:** Deferring because development-mode Hibernate DDL is sufficient for Phase 1. A proper migration tool will be selected when schema stabilizes.
+**Rationale:** Flyway is the standard migration tool for Spring Boot with excellent Maven/Gradle integration. SQL-based migrations are simple to read and maintain. Spring Boot auto-configures Flyway with zero additional setup. Hibernate DDL auto is set to `validate` in production to ensure the schema always matches the entities.
 
-**Consequences:** Initial development uses Hibernate DDL auto. A migration tool will be introduced before production-like deployments.
+**Alternatives considered:**
+- Liquibase — viable but XML/YAML changelogs add verbosity without clear benefit for this project.
+- Hibernate DDL generation (dev only) — used in test profile (`create-drop` with H2), but not suitable for production where reproducible, version-controlled migrations are needed.
+
+**Consequences:** All schema changes must go through Flyway migration files. The test profile uses H2 with Hibernate `create-drop` instead (Flyway disabled) for speed and isolation.
+
+---
+
+### DEC-008: JWT Signing Algorithm and Password Hashing
+
+**Date:** 2026-10-20  
+**Phase:** 2  
+**Status:** ACCEPTED
+
+**Context:** Phase 2 implements JWT authentication and user registration. Decisions were needed on the JWT signing algorithm, token expiry, and password hashing scheme.
+
+**Decision:** Use HS256 for JWT signing with a configurable secret (minimum 32 bytes, auto-padded if shorter in dev). Token expiry is 24 hours (86400000 ms, configurable). Passwords are hashed with `BCryptPasswordEncoder` from Spring Security.
+
+**Rationale:** HS256 is the default and simplest HMAC-based JWT algorithm — sufficient for a single-service backend where the secret stays server-side. BCrypt is the industry standard for password hashing with adaptive cost factor. Both are well-supported by Spring Security and JJWT 0.12.6.
+
+**Alternatives considered:**
+- RS256 (asymmetric) — unnecessary complexity for a single backend issuing and validating its own tokens.
+- Argon2 — stronger than BCrypt but requires additional dependency; BCrypt is sufficient and widely supported.
+
+**Consequences:** The JWT secret must be kept secure in production via environment variable. Token refresh is not implemented in Phase 2 (tokens expire after 24h).
+
+---
+
+### DEC-009: H2 In-Memory Database for Tests with PostgreSQL Compatibility Mode
+
+**Date:** 2026-10-20  
+**Phase:** 2  
+**Status:** ACCEPTED
+
+**Context:** Integration tests need a fast, self-contained database that doesn't require a running PostgreSQL instance. However, the production database is PostgreSQL and uses PostgreSQL-specific features (e.g., `gen_random_uuid()`, `JSONB`).
+
+**Decision:** Use H2 in-memory database with `MODE=PostgreSQL` compatibility flag for tests. Flyway is disabled in tests; Hibernate `ddl-auto: create-drop` generates the schema from JPA entities. A `TestDataInitializer` seeds the three default roles in the test profile.
+
+**Rationale:** H2 in PostgreSQL mode provides fast, isolated test execution without Docker. Hibernate-generated schema is sufficient for entity-level testing. Disabling Flyway in tests avoids migration syntax issues (e.g., `gen_random_uuid()` is PostgreSQL-specific). The `TestDataInitializer` compensates for the lack of Flyway V7 role seeding.
+
+**Alternatives considered:**
+- Testcontainers with real PostgreSQL — most accurate but slow (Docker startup overhead per test class). Can be added later for critical integration tests.
+- Flyway with H2-compatible migrations — would require maintaining dual-syntax migrations, adding complexity.
+
+**Consequences:** Tests run against H2, not real PostgreSQL. Subtle PostgreSQL-specific behavior differences (e.g., JSONB vs TEXT column types) are not caught by tests. Production uses Flyway + `ddl-auto: validate` to ensure schema correctness.
 
 ---
 

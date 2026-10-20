@@ -1,8 +1,8 @@
 # VeriLens — API Contract
 
 **Version:** 0.1.0  
-**Phase:** 0 — Specification  
-**Last updated:** 2026-10-07
+**Phase:** 2 — Backend Foundation  
+**Last updated:** 2026-10-20
 
 ---
 
@@ -22,6 +22,8 @@ All endpoints use JSON request/response bodies unless otherwise noted.
 Base URL: `/api`
 
 ### 2.1 Authentication
+
+> **Status (Phase 2): ✅ Implemented** — All three auth endpoints are live and tested.
 
 #### POST /api/auth/register
 
@@ -108,6 +110,8 @@ Get the authenticated user's profile.
 ---
 
 ### 2.2 Documents
+
+> **Status (Phase 2): ✅ Implemented** — Upload, list, get, and delete endpoints are live and tested.
 
 #### POST /api/documents
 
@@ -211,6 +215,8 @@ Delete a document and its analysis results.
 ---
 
 ### 2.3 Analysis
+
+> **Status (Phase 2): ⚡ Lifecycle-only** — Create, status, and get endpoints exist but only manage the analysis task lifecycle (QUEUED status). No AI processing is triggered in Phase 2. Actual analysis will be connected in Phases 4–9.
 
 #### POST /api/documents/{id}/analysis
 
@@ -332,6 +338,8 @@ Download the screening report as PDF.
 ---
 
 ### 2.5 Health
+
+> **Status (Phase 2): ✅ Implemented** — Health endpoint is live and tested.
 
 #### GET /api/health
 
