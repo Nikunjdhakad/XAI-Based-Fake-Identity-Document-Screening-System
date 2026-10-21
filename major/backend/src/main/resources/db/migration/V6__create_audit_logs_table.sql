@@ -8,7 +8,7 @@ CREATE TABLE audit_logs (
     action       VARCHAR(50)  NOT NULL,
     entity_type  VARCHAR(50),
     entity_id    UUID,
-    details      JSONB,
+    details      TEXT,
     ip_address   VARCHAR(45),
     created_at   TIMESTAMP    NOT NULL DEFAULT NOW()
 );

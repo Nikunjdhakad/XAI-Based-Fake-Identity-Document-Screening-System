@@ -1,55 +1,90 @@
 package com.verilens.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.verilens.dto.AnalysisTaskResponse;
+import com.verilens.dto.OcrResultResponse;
 import com.verilens.entity.*;
-import com.verilens.repository.AnalysisTaskRepository;
-import com.verilens.repository.DocumentRepository;
+import com.verilens.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Analysis service — manages analysis task lifecycle.
- * In Phase 2, this only creates and queries tasks.
- * Actual AI processing will be connected in Phases 4–9.
+ * Analysis service — manages analysis task lifecycle and dispatches AI processing.
+ *
+ * Phase 4: OCR is connected via AiServiceClient → Python AI service (Tesseract).
+ * Analysis runs asynchronously so HTTP responses are not blocked.
+ * Future phases will add forensics, metadata, identity, face, and AI screening.
  */
 @Service
 public class AnalysisService {
 
+    private static final Logger log = LoggerFactory.getLogger(AnalysisService.class);
+
     private final AnalysisTaskRepository analysisTaskRepository;
     private final DocumentRepository documentRepository;
+    private final DocumentFileRepository documentFileRepository;
+    private final OcrResultRepository ocrResultRepository;
+    private final AiServiceClient aiServiceClient;
+    private final StorageService storageService;
+    private final ObjectMapper objectMapper;
 
-    public AnalysisService(AnalysisTaskRepository analysisTaskRepository,
-                           DocumentRepository documentRepository) {
+    public AnalysisService(
+            AnalysisTaskRepository analysisTaskRepository,
+            DocumentRepository documentRepository,
+            DocumentFileRepository documentFileRepository,
+            OcrResultRepository ocrResultRepository,
+            AiServiceClient aiServiceClient,
+            StorageService storageService,
+            ObjectMapper objectMapper) {
         this.analysisTaskRepository = analysisTaskRepository;
         this.documentRepository = documentRepository;
+        this.documentFileRepository = documentFileRepository;
+        this.ocrResultRepository = ocrResultRepository;
+        this.aiServiceClient = aiServiceClient;
+        this.storageService = storageService;
+        this.objectMapper = objectMapper;
     }
 
+    // -------------------------------------------------------------------------
+    // Public API
+    // -------------------------------------------------------------------------
+
     /**
-     * Create a new analysis task for a document.
-     * Sets the document status to QUEUED.
-     * Does NOT trigger actual AI processing — that comes in later phases.
+     * Create a new analysis task and dispatch async processing.
+     * Returns immediately — the frontend polls /analysis/status for updates.
      */
     @Transactional
     public AnalysisTaskResponse createAnalysisTask(UUID documentId, UUID userId, String modules) {
         Document document = documentRepository.findByIdAndUserId(documentId, userId)
                 .orElseThrow(() -> new RuntimeException("Document not found or access denied"));
 
-        // Update document status
         document.setStatus(DocumentStatus.QUEUED);
         documentRepository.save(document);
 
-        // Create analysis task
         AnalysisTask task = new AnalysisTask();
         task.setDocument(document);
         task.setStatus(AnalysisTaskStatus.QUEUED);
-        task.setRequestedModules(modules);
+        task.setRequestedModules(modules != null ? modules : "OCR");
 
-        AnalysisTask savedTask = analysisTaskRepository.save(task);
-        return AnalysisTaskResponse.fromEntity(savedTask);
+        AnalysisTask saved = analysisTaskRepository.save(task);
+
+        // Kick off async — returns before analysis completes
+        runAnalysisAsync(saved.getId());
+
+        return AnalysisTaskResponse.fromEntity(saved);
     }
 
     /**
@@ -57,22 +92,21 @@ public class AnalysisService {
      */
     @Transactional(readOnly = true)
     public AnalysisTaskResponse getAnalysisStatus(UUID documentId, UUID userId) {
-        // Verify document ownership
         documentRepository.findByIdAndUserId(documentId, userId)
                 .orElseThrow(() -> new RuntimeException("Document not found or access denied"));
 
-        AnalysisTask task = analysisTaskRepository.findTopByDocumentIdOrderByCreatedAtDesc(documentId)
+        AnalysisTask task = analysisTaskRepository
+                .findTopByDocumentIdOrderByCreatedAtDesc(documentId)
                 .orElseThrow(() -> new RuntimeException("No analysis task found for this document"));
 
         return AnalysisTaskResponse.fromEntity(task);
     }
 
     /**
-     * Get all analysis tasks for a document.
+     * Get all analysis tasks for a document (history).
      */
     @Transactional(readOnly = true)
     public List<AnalysisTaskResponse> getAnalysisTasks(UUID documentId, UUID userId) {
-        // Verify document ownership
         documentRepository.findByIdAndUserId(documentId, userId)
                 .orElseThrow(() -> new RuntimeException("Document not found or access denied"));
 
@@ -80,5 +114,188 @@ public class AnalysisService {
                 .stream()
                 .map(AnalysisTaskResponse::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Get the OCR result for the latest analysis of a document.
+     */
+    @Transactional(readOnly = true)
+    public OcrResultResponse getOcrResult(UUID documentId, UUID userId) {
+        documentRepository.findByIdAndUserId(documentId, userId)
+                .orElseThrow(() -> new RuntimeException("Document not found or access denied"));
+
+        OcrResult ocr = ocrResultRepository
+                .findTopByDocumentIdOrderByCreatedAtDesc(documentId)
+                .orElseThrow(() -> new RuntimeException("No OCR result found for this document"));
+
+        return OcrResultResponse.fromEntity(ocr);
+    }
+
+    // -------------------------------------------------------------------------
+    // Async analysis pipeline
+    // -------------------------------------------------------------------------
+
+    /**
+     * Public entry point for async execution.
+     * Spring @Async requires a public method on a managed bean.
+     */
+    @Async("analysisExecutor")
+    public void runAnalysisAsync(UUID taskId) {
+        try {
+            runAnalysis(taskId);
+        } catch (Exception e) {
+            log.error("Unhandled exception in analysis task {}: {}", taskId, e.getMessage(), e);
+            safeMarkFailed(taskId, "Internal error: " + e.getMessage());
+        }
+    }
+
+    private void runAnalysis(UUID taskId) {
+        AnalysisTask task = analysisTaskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found: " + taskId));
+
+        Document document = task.getDocument();
+
+        // Transition to PROCESSING
+        task.setStatus(AnalysisTaskStatus.PROCESSING);
+        task.setStartedAt(Instant.now());
+        analysisTaskRepository.save(task);
+        document.setStatus(DocumentStatus.PROCESSING);
+        documentRepository.save(document);
+
+        Instant start = Instant.now();
+
+        try {
+            // Locate the primary document file
+            DocumentFile docFile = documentFileRepository
+                    .findByDocumentId(document.getId())
+                    .stream()
+                    .filter(f -> f.getFileType() == FileType.DOCUMENT)
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("No document file found for " + document.getId()));
+
+            // Read bytes from local storage
+            byte[] fileBytes = Files.readAllBytes(
+                    storageService.resolveFile(docFile.getStoragePath()));
+
+            // Dispatch to Python AI service
+            String requestedModules = task.getRequestedModules() != null
+                    ? task.getRequestedModules() : "OCR";
+
+            Map<String, Object> aiResponse = aiServiceClient.analyze(
+                    document.getId().toString(),
+                    fileBytes,
+                    docFile.getOriginalFilename(),
+                    docFile.getMimeType(),
+                    requestedModules);
+
+            if (aiResponse == null) {
+                safeMarkFailed(taskId, "AI service returned no response");
+                return;
+            }
+
+            // Persist per-module results
+            persistOcrResult(task, document, aiResponse);
+
+            // Derive final status
+            String aiStatus = (String) aiResponse.getOrDefault("status", "FAILED");
+            AnalysisTaskStatus finalTaskStatus = switch (aiStatus) {
+                case "COMPLETED"           -> AnalysisTaskStatus.COMPLETED;
+                case "PARTIALLY_COMPLETED" -> AnalysisTaskStatus.PARTIALLY_COMPLETED;
+                default                    -> AnalysisTaskStatus.FAILED;
+            };
+            DocumentStatus finalDocStatus = switch (finalTaskStatus) {
+                case COMPLETED           -> DocumentStatus.COMPLETED;
+                case PARTIALLY_COMPLETED -> DocumentStatus.PARTIALLY_COMPLETED;
+                default                  -> DocumentStatus.FAILED;
+            };
+
+            long processingMs = Instant.now().toEpochMilli() - start.toEpochMilli();
+            task.setStatus(finalTaskStatus);
+            task.setCompletedAt(Instant.now());
+            task.setProcessingTimeMs(processingMs);
+            analysisTaskRepository.save(task);
+
+            document.setStatus(finalDocStatus);
+            documentRepository.save(document);
+
+            log.info("Analysis task {} completed in {}ms — status: {}", taskId, processingMs, finalTaskStatus);
+
+        } catch (IOException e) {
+            log.error("IO error reading document file for task {}: {}", taskId, e.getMessage());
+            safeMarkFailed(taskId, "Could not read document file: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("Analysis failed for task {}: {}", taskId, e.getMessage(), e);
+            safeMarkFailed(taskId, e.getMessage());
+        }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void persistOcrResult(AnalysisTask task, Document document,
+                                   Map<String, Object> aiResponse) {
+        try {
+            Object modulesObj = aiResponse.get("modules");
+            if (!(modulesObj instanceof Map)) return;
+
+            Map<String, Object> modules = (Map<String, Object>) modulesObj;
+            Object ocrObj = modules.get("ocr");
+            if (!(ocrObj instanceof Map)) return;
+
+            Map<String, Object> ocrData = (Map<String, Object>) ocrObj;
+
+            OcrResult ocr = new OcrResult();
+            ocr.setTask(task);
+            ocr.setDocument(document);
+            ocr.setStatus((String) ocrData.getOrDefault("status", "FAILED"));
+            ocr.setExtractedText((String) ocrData.get("extractedText"));
+            ocr.setErrorMessage((String) ocrData.get("error"));
+
+            Object conf = ocrData.get("overallConfidence");
+            if (conf instanceof Number n) {
+                ocr.setOverallConfidence(BigDecimal.valueOf(n.doubleValue()));
+            }
+            Object pages = ocrData.get("pageCount");
+            if (pages instanceof Number n) {
+                ocr.setPageCount(n.intValue());
+            }
+            Object ptms = ocrData.get("processingTimeMs");
+            if (ptms instanceof Number n) {
+                ocr.setProcessingTimeMs(n.longValue());
+            }
+
+            // Serialise words list to JSON string for storage
+            Object words = ocrData.get("words");
+            if (words != null) {
+                try {
+                    ocr.setWordsJson(objectMapper.writeValueAsString(words));
+                } catch (JsonProcessingException ex) {
+                    log.warn("Could not serialise OCR words to JSON: {}", ex.getMessage());
+                }
+            }
+
+            ocrResultRepository.save(ocr);
+            log.debug("Persisted OCR result for task {} — status: {}", task.getId(), ocr.getStatus());
+
+        } catch (Exception e) {
+            log.error("Failed to persist OCR result for task {}: {}", task.getId(), e.getMessage());
+        }
+    }
+
+    private void safeMarkFailed(UUID taskId, String errorMessage) {
+        try {
+            analysisTaskRepository.findById(taskId).ifPresent(task -> {
+                task.setStatus(AnalysisTaskStatus.FAILED);
+                task.setCompletedAt(Instant.now());
+                task.setErrorMessage(errorMessage);
+                analysisTaskRepository.save(task);
+
+                Document doc = task.getDocument();
+                if (doc != null) {
+                    doc.setStatus(DocumentStatus.FAILED);
+                    documentRepository.save(doc);
+                }
+            });
+        } catch (Exception e) {
+            log.error("Could not mark task {} as failed: {}", taskId, e.getMessage());
+        }
     }
 }

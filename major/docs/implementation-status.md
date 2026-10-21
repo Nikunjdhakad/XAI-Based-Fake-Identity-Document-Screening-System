@@ -8,9 +8,9 @@
 | ----- | ---------------------------- | -------------- |
 | 0     | Specification                | ✅ COMPLETE     |
 | 1     | Repository Foundation        | ✅ COMPLETE     |
-| 2     | Backend Foundation           | ✅ COMPLETE |
-| 3     | Frontend Foundation          | ⬜ NOT STARTED |
-| 4     | OCR                          | ⬜ NOT STARTED |
+| 2     | Backend Foundation           | ✅ COMPLETE     |
+| 3     | Frontend Foundation          | ✅ COMPLETE     |
+| 4     | OCR                          | ✅ COMPLETE     |
 | 5     | Metadata Analysis            | ⬜ NOT STARTED |
 | 6     | Identity Consistency         | ⬜ NOT STARTED |
 | 7     | Image Forensics              | ⬜ NOT STARTED |
@@ -25,7 +25,63 @@
 
 ---
 
-## Phase 2 — Backend Foundation — Details
+## Phase 4 — OCR — Details
+
+### Completed Items
+
+- [x] **Python OCR module** (`ai-service/app/modules/ocr.py`) — pytesseract wrapper with per-word bounding boxes, confidence scores, multi-page PDF support (max 5 pages), graceful failure if Tesseract unavailable
+- [x] **`POST /internal/analyze`** endpoint — accepts multipart document, runs OCR, returns structured JSON; non-OCR modules return NOT_APPLICABLE until their phases
+- [x] **Tesseract installed in Docker** via `apt-get install tesseract-ocr tesseract-ocr-eng poppler-utils`
+- [x] **AI service health** reports `ocr: AVAILABLE` when Tesseract is running
+- [x] **Flyway V8** — `ocr_results` table with task_id, document_id, extracted_text, words_json, overall_confidence, page_count
+- [x] **`OcrResult` entity** — JPA entity mapped to ocr_results table
+- [x] **`OcrResultRepository`** — JPA repository with findByTaskId, findTopByDocumentId
+- [x] **`OcrResultResponse` DTO** — safe response projection
+- [x] **`AiServiceClient`** — Spring RestTemplate-based multipart HTTP client for internal AI service calls
+- [x] **`AsyncConfig`** — `@EnableAsync` + named `analysisExecutor` thread pool (2–5 threads, queue 50)
+- [x] **`AnalysisService` rewritten** — `createAnalysisTask` now dispatches real async AI processing; persists OCR result; transitions document through QUEUED → PROCESSING → COMPLETED/FAILED
+- [x] **`GET /api/documents/{id}/analysis/ocr`** — retrieves OCR results after analysis completes
+- [x] **Python tests** — 16 passed, 1 skipped (confidence test skipped on host without Tesseract binary; passes in Docker)
+- [x] **Backend tests** — all 24 existing tests still pass (BUILD SUCCESS)
+
+### Technology Decision
+
+Used **pytesseract / Tesseract** (Apache 2.0) over PaddleOCR:
+- Tesseract fits in the existing Docker image without multi-GB model downloads
+- Sufficient for Phase 4 baseline; PaddleOCR can be evaluated in Phase 13
+- Documented in decisions.md
+
+---
+
+## Phase 3 — Frontend Foundation — Details
+
+### Completed Items
+
+- [x] React Router v6 installed and configured with nested protected routes
+- [x] `AuthContext` — JWT stored in localStorage, login/register/logout, auto-load on startup
+- [x] `api/client.ts` — typed fetch wrapper with JWT injection, `ApiException` for error handling
+- [x] `types.ts` — shared TypeScript types: User, DocumentResponse, Page, AnalysisTaskResponse
+- [x] Design system — dark forensics-workstation theme via CSS custom properties (index.css)
+- [x] Shared components: `AppLayout` (sidebar nav), `ProtectedRoute`, `RiskBadge`, `StatusBadge`
+- [x] **Login/Register page** — professional minimal login, toggle between sign-in and create account
+- [x] **Dashboard page** — total count, recent screenings table, quick upload action
+- [x] **Upload page** — drag-and-drop zone, file type validation, document type selector, optional reference face
+- [x] **Analysis Progress page** — start analysis, pipeline stepper (10 stages), 5s polling, elapsed timer
+- [x] **Results page** — risk header, evidence summary, suspicious regions placeholder, expandable module accordions
+- [x] **History page** — paginated table, filename search filter, status dropdown filter
+- [x] **Document Details page** — document metadata, analysis status, delete with confirmation
+- [x] All routes protected (redirect to /login when unauthenticated)
+- [x] CSS Modules for all component styles, no UI framework
+- [x] TypeScript strict — `verbatimModuleSyntax` compatible imports
+- [x] `npm run build` succeeds — 294 KB JS (91 KB gzip), 17 KB CSS
+
+### Design Decisions
+
+- Dark theme (`#0d0f13` background) — professional forensics workstation aesthetic per UI/UX spec
+- No UI framework — custom CSS only, consistent with spec requirement to avoid generic AI dashboard look
+- Inter font via Google Fonts
+- Language follows spec: "potential manipulation", "elevated risk", never "definitely fake"
+- Module accordions on results page are placeholder until Phases 4–9 connect AI modules
 
 ### Completed Items
 

@@ -1,10 +1,13 @@
 # =============================================================================
 # VeriLens AI Service — Python Dependencies
 # =============================================================================
-# Phase 1: Minimal dependencies for the FastAPI health endpoint.
-# AI/CV libraries will be added in their respective phases (4–9).
+# Phase 4: OCR added via pytesseract + Pillow + pdf2image
 # =============================================================================
 
 fastapi==0.115.0
 uvicorn[standard]==0.31.0
 python-multipart==0.0.12
+pytesseract==0.3.13
+Pillow==11.0.0
+pdf2image==1.17.0
+httpx==0.28.1

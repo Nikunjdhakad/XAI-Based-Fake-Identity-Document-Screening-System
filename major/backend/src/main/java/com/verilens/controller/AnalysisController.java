@@ -2,6 +2,7 @@ package com.verilens.controller;
 
 import com.verilens.dto.AnalysisTaskResponse;
 import com.verilens.dto.ErrorResponse;
+import com.verilens.dto.OcrResultResponse;
 import com.verilens.entity.User;
 import com.verilens.repository.UserRepository;
 import com.verilens.service.AnalysisService;
@@ -122,5 +123,25 @@ public class AnalysisController {
         User user = userRepository.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
         return user.getId();
+    }
+
+    /**
+     * GET /api/documents/{documentId}/analysis/ocr — Retrieve OCR results.
+     * Available after analysis completes (Phase 4+).
+     */
+    @GetMapping("/ocr")
+    public ResponseEntity<?> getOcrResult(
+            @PathVariable UUID documentId,
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest httpRequest) {
+        try {
+            UUID userId = resolveUserId(userDetails);
+            OcrResultResponse response = analysisService.getOcrResult(documentId, userId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(404, "Not Found", e.getMessage(),
+                            httpRequest.getRequestURI()));
+        }
     }
 }
