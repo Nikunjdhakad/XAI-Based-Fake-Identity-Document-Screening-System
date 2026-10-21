@@ -24,8 +24,11 @@ def test_health_returns_up(client):
     assert "timestamp" in data
     assert "modules" in data
 
-    # All modules should be UNAVAILABLE in Phase 1
-    for module_name in ["ocr", "forensics", "metadata", "face", "aiManipulation"]:
+    # OCR and metadata are now implemented (Phase 4 & 5)
+    # Other modules should still be UNAVAILABLE
+    assert data["modules"]["ocr"] in ("AVAILABLE", "UNAVAILABLE")  # depends on Tesseract
+    assert data["modules"]["metadata"] == "AVAILABLE"
+    for module_name in ["forensics", "face", "aiManipulation"]:
         assert data["modules"][module_name] == "UNAVAILABLE"
 
 

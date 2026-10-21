@@ -13,27 +13,24 @@ from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.responses import JSONResponse
 
 from app.modules import ocr as ocr_module
+from app.modules import metadata as metadata_module
 
 API_KEY = os.getenv("AI_SERVICE_API_KEY", "dev-api-key")
 
 app = FastAPI(
     title="VeriLens AI Service",
     description="Internal AI/CV analysis service for VeriLens document screening.",
-    version="0.2.0",
+    version="0.3.0",
     docs_url="/internal/docs",
     redoc_url=None,
 )
 
 
 # ---------------------------------------------------------------------------
-# Middleware — API key verification for all internal endpoints except health
+# Middleware — API key verification
 # ---------------------------------------------------------------------------
 @app.middleware("http")
 async def verify_api_key(request: Request, call_next):
-    """
-    Verify the X-API-Key header for all /internal/* paths except /internal/health.
-    The health endpoint is exempt to allow Docker and Spring Boot health checks.
-    """
     if (
         request.url.path.startswith("/internal/")
         and request.url.path != "/internal/health"
@@ -53,37 +50,34 @@ async def verify_api_key(request: Request, call_next):
 # ---------------------------------------------------------------------------
 @app.get("/internal/health")
 async def health():
-    """
-    Reports service status and per-module availability.
-    OCR is AVAILABLE when Tesseract is installed and reachable.
-    """
     return {
         "status": "UP",
         "service": "verilens-ai-service",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "modules": {
-            "ocr": "AVAILABLE" if ocr_module.is_available() else "UNAVAILABLE",
-            "forensics": "UNAVAILABLE",
-            "metadata": "UNAVAILABLE",
-            "face": "UNAVAILABLE",
-            "aiManipulation": "UNAVAILABLE",
+            "ocr":             "AVAILABLE" if ocr_module.is_available() else "UNAVAILABLE",
+            "metadata":        "AVAILABLE",
+            "forensics":       "UNAVAILABLE",
+            "face":            "UNAVAILABLE",
+            "aiManipulation":  "UNAVAILABLE",
         },
     }
 
 
 # ---------------------------------------------------------------------------
-# Analyze endpoint — Phase 4: OCR connected
+# Analyze endpoint — Phase 4: OCR, Phase 5: Metadata
 # ---------------------------------------------------------------------------
 @app.post("/internal/analyze")
 async def analyze(
     file: UploadFile = File(...),
     documentId: str = Form(...),
-    modules: str = Form(default="OCR"),
+    modules: str = Form(default="OCR,METADATA"),
 ):
     """
     Run analysis modules on the uploaded document.
 
-    Phase 4: OCR is fully implemented.
+    Phase 4: OCR
+    Phase 5: Metadata analysis
     Other modules return NOT_APPLICABLE until their phases are implemented.
     The module list is comma-separated (e.g., "OCR,METADATA").
     """
@@ -91,7 +85,7 @@ async def analyze(
 
     file_bytes = await file.read()
     mime_type = file.content_type or "application/octet-stream"
-    requested = {m.strip().upper() for m in modules.split(",")} if modules else {"OCR"}
+    requested = {m.strip().upper() for m in modules.split(",")} if modules else {"OCR", "METADATA"}
 
     module_results: dict = {}
 
@@ -101,8 +95,14 @@ async def analyze(
     else:
         module_results["ocr"] = {"status": "NOT_APPLICABLE"}
 
+    # --- Metadata (Phase 5) ---
+    if "METADATA" in requested:
+        module_results["metadata"] = metadata_module.run(file_bytes, mime_type)
+    else:
+        module_results["metadata"] = {"status": "NOT_APPLICABLE"}
+
     # --- Future modules — NOT_APPLICABLE until implemented ---
-    for key in ("forensics", "metadata", "identity", "faceVerification", "aiManipulation"):
+    for key in ("forensics", "identity", "faceVerification", "aiManipulation"):
         module_results[key] = {"status": "NOT_APPLICABLE"}
 
     # Determine overall status

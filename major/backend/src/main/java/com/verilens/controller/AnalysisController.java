@@ -2,6 +2,7 @@ package com.verilens.controller;
 
 import com.verilens.dto.AnalysisTaskResponse;
 import com.verilens.dto.ErrorResponse;
+import com.verilens.dto.MetadataResultResponse;
 import com.verilens.dto.OcrResultResponse;
 import com.verilens.entity.User;
 import com.verilens.repository.UserRepository;
@@ -137,6 +138,26 @@ public class AnalysisController {
         try {
             UUID userId = resolveUserId(userDetails);
             OcrResultResponse response = analysisService.getOcrResult(documentId, userId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(404, "Not Found", e.getMessage(),
+                            httpRequest.getRequestURI()));
+        }
+    }
+
+    /**
+     * GET /api/documents/{documentId}/analysis/metadata — Retrieve metadata analysis results.
+     * Available after analysis completes (Phase 5+).
+     */
+    @GetMapping("/metadata")
+    public ResponseEntity<?> getMetadataResult(
+            @PathVariable UUID documentId,
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest httpRequest) {
+        try {
+            UUID userId = resolveUserId(userDetails);
+            MetadataResultResponse response = analysisService.getMetadataResult(documentId, userId);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

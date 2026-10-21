@@ -3,6 +3,7 @@ package com.verilens.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.verilens.dto.AnalysisTaskResponse;
+import com.verilens.dto.MetadataResultResponse;
 import com.verilens.dto.OcrResultResponse;
 import com.verilens.entity.*;
 import com.verilens.repository.*;
@@ -25,8 +26,8 @@ import java.util.stream.Collectors;
  * Analysis service — manages analysis task lifecycle and dispatches AI processing.
  *
  * Phase 4: OCR is connected via AiServiceClient → Python AI service (Tesseract).
+ * Phase 5: Metadata analysis connected (Pillow + PyMuPDF).
  * Analysis runs asynchronously so HTTP responses are not blocked.
- * Future phases will add forensics, metadata, identity, face, and AI screening.
  */
 @Service
 public class AnalysisService {
@@ -37,6 +38,7 @@ public class AnalysisService {
     private final DocumentRepository documentRepository;
     private final DocumentFileRepository documentFileRepository;
     private final OcrResultRepository ocrResultRepository;
+    private final MetadataResultRepository metadataResultRepository;
     private final AiServiceClient aiServiceClient;
     private final StorageService storageService;
     private final ObjectMapper objectMapper;
@@ -46,6 +48,7 @@ public class AnalysisService {
             DocumentRepository documentRepository,
             DocumentFileRepository documentFileRepository,
             OcrResultRepository ocrResultRepository,
+            MetadataResultRepository metadataResultRepository,
             AiServiceClient aiServiceClient,
             StorageService storageService,
             ObjectMapper objectMapper) {
@@ -53,6 +56,7 @@ public class AnalysisService {
         this.documentRepository = documentRepository;
         this.documentFileRepository = documentFileRepository;
         this.ocrResultRepository = ocrResultRepository;
+        this.metadataResultRepository = metadataResultRepository;
         this.aiServiceClient = aiServiceClient;
         this.storageService = storageService;
         this.objectMapper = objectMapper;
@@ -77,7 +81,7 @@ public class AnalysisService {
         AnalysisTask task = new AnalysisTask();
         task.setDocument(document);
         task.setStatus(AnalysisTaskStatus.QUEUED);
-        task.setRequestedModules(modules != null ? modules : "OCR");
+        task.setRequestedModules(modules != null ? modules : "OCR,METADATA");
 
         AnalysisTask saved = analysisTaskRepository.save(task);
 
@@ -129,6 +133,21 @@ public class AnalysisService {
                 .orElseThrow(() -> new RuntimeException("No OCR result found for this document"));
 
         return OcrResultResponse.fromEntity(ocr);
+    }
+
+    /**
+     * Get the metadata analysis result for the latest analysis of a document.
+     */
+    @Transactional(readOnly = true)
+    public MetadataResultResponse getMetadataResult(UUID documentId, UUID userId) {
+        documentRepository.findByIdAndUserId(documentId, userId)
+                .orElseThrow(() -> new RuntimeException("Document not found or access denied"));
+
+        MetadataResult meta = metadataResultRepository
+                .findTopByDocumentIdOrderByCreatedAtDesc(documentId)
+                .orElseThrow(() -> new RuntimeException("No metadata result found for this document"));
+
+        return MetadataResultResponse.fromEntity(meta);
     }
 
     // -------------------------------------------------------------------------
@@ -195,6 +214,7 @@ public class AnalysisService {
 
             // Persist per-module results
             persistOcrResult(task, document, aiResponse);
+            persistMetadataResult(task, document, aiResponse);
 
             // Derive final status
             String aiStatus = (String) aiResponse.getOrDefault("status", "FAILED");
@@ -277,6 +297,66 @@ public class AnalysisService {
 
         } catch (Exception e) {
             log.error("Failed to persist OCR result for task {}: {}", task.getId(), e.getMessage());
+        }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void persistMetadataResult(AnalysisTask task, Document document,
+                                        Map<String, Object> aiResponse) {
+        try {
+            Object modulesObj = aiResponse.get("modules");
+            if (!(modulesObj instanceof Map)) return;
+
+            Map<String, Object> modules = (Map<String, Object>) modulesObj;
+            Object metaObj = modules.get("metadata");
+            if (!(metaObj instanceof Map)) return;
+
+            Map<String, Object> metaData = (Map<String, Object>) metaObj;
+
+            MetadataResult meta = new MetadataResult();
+            meta.setTask(task);
+            meta.setDocument(document);
+            meta.setStatus((String) metaData.getOrDefault("status", "FAILED"));
+            meta.setErrorMessage((String) metaData.get("error"));
+
+            Object avail = metaData.get("available");
+            if (avail instanceof Boolean b) {
+                meta.setAvailable(b);
+            }
+
+            Object score = metaData.get("evidenceScore");
+            if (score instanceof Number n) {
+                meta.setEvidenceScore(BigDecimal.valueOf(n.doubleValue()));
+            }
+
+            Object ptms = metaData.get("processingTimeMs");
+            if (ptms instanceof Number n) {
+                meta.setProcessingTimeMs(n.longValue());
+            }
+
+            Object props = metaData.get("properties");
+            if (props != null) {
+                try {
+                    meta.setPropertiesJson(objectMapper.writeValueAsString(props));
+                } catch (JsonProcessingException ex) {
+                    log.warn("Could not serialise metadata properties: {}", ex.getMessage());
+                }
+            }
+
+            Object anomalies = metaData.get("anomalies");
+            if (anomalies != null) {
+                try {
+                    meta.setAnomaliesJson(objectMapper.writeValueAsString(anomalies));
+                } catch (JsonProcessingException ex) {
+                    log.warn("Could not serialise metadata anomalies: {}", ex.getMessage());
+                }
+            }
+
+            metadataResultRepository.save(meta);
+            log.debug("Persisted metadata result for task {} — status: {}", task.getId(), meta.getStatus());
+
+        } catch (Exception e) {
+            log.error("Failed to persist metadata result for task {}: {}", task.getId(), e.getMessage());
         }
     }
 

@@ -11,7 +11,7 @@
 | 2     | Backend Foundation           | ✅ COMPLETE     |
 | 3     | Frontend Foundation          | ✅ COMPLETE     |
 | 4     | OCR                          | ✅ COMPLETE     |
-| 5     | Metadata Analysis            | ⬜ NOT STARTED |
+| 5     | Metadata Analysis            | ✅ COMPLETE     |
 | 6     | Identity Consistency         | ⬜ NOT STARTED |
 | 7     | Image Forensics              | ⬜ NOT STARTED |
 | 8     | Face Verification            | ⬜ NOT STARTED |
@@ -22,6 +22,27 @@
 | 13    | Evaluation                   | ⬜ NOT STARTED |
 | 14    | Hardening                    | ⬜ NOT STARTED |
 | 15    | Final Documentation          | ⬜ NOT STARTED |
+
+---
+
+## Phase 5 — Metadata Analysis — Details
+
+### Completed Items
+
+- [x] **Python metadata module** (`ai-service/app/modules/metadata.py`) — Pillow for image EXIF/dimensions, PyMuPDF for PDF metadata, anomaly detection rules
+- [x] **Anomaly checks**: editing software detection (Photoshop/GIMP/etc), timestamp inconsistency, GPS data in documents, missing EXIF on JPEG, low resolution, no PDF metadata, unexpected page count
+- [x] **Evidence score** — severity-weighted normalised score (0.0–1.0) from detected anomalies
+- [x] **PyMuPDF** added to requirements.txt and Dockerfile
+- [x] **`/internal/analyze`** now runs METADATA alongside OCR when requested
+- [x] **Health endpoint** reports `metadata: AVAILABLE`
+- [x] **Flyway V9** — `metadata_results` table
+- [x] **`MetadataResult` entity** + `MetadataResultRepository`
+- [x] **`MetadataResultResponse` DTO**
+- [x] **`AnalysisService`** updated — persists metadata results alongside OCR, default modules now `OCR,METADATA`
+- [x] **`GET /api/documents/{id}/analysis/metadata`** endpoint
+- [x] **Python tests** — 20 metadata tests (schema, anomaly structure, evidence score, endpoint integration)
+- [x] **Backend tests** — all 24 existing tests still pass
+- [x] **37 Python tests total** (1 skipped), **24 Spring Boot tests** — all green
 
 ---
 
