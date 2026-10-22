@@ -2,6 +2,8 @@ package com.verilens.controller;
 
 import com.verilens.dto.AnalysisTaskResponse;
 import com.verilens.dto.ErrorResponse;
+import com.verilens.dto.ForensicResultResponse;
+import com.verilens.dto.IdentityConsistencyResponse;
 import com.verilens.dto.MetadataResultResponse;
 import com.verilens.dto.OcrResultResponse;
 import com.verilens.entity.User;
@@ -158,6 +160,46 @@ public class AnalysisController {
         try {
             UUID userId = resolveUserId(userDetails);
             MetadataResultResponse response = analysisService.getMetadataResult(documentId, userId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(404, "Not Found", e.getMessage(),
+                            httpRequest.getRequestURI()));
+        }
+    }
+
+    /**
+     * GET /api/documents/{documentId}/analysis/identity — Retrieve identity consistency results.
+     * Available after analysis completes (Phase 6+).
+     */
+    @GetMapping("/identity")
+    public ResponseEntity<?> getIdentityResult(
+            @PathVariable UUID documentId,
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest httpRequest) {
+        try {
+            UUID userId = resolveUserId(userDetails);
+            IdentityConsistencyResponse response = analysisService.getIdentityResult(documentId, userId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(404, "Not Found", e.getMessage(),
+                            httpRequest.getRequestURI()));
+        }
+    }
+
+    /**
+     * GET /api/documents/{documentId}/analysis/forensics — Retrieve image forensics results.
+     * Available after analysis completes (Phase 7+).
+     */
+    @GetMapping("/forensics")
+    public ResponseEntity<?> getForensicResult(
+            @PathVariable UUID documentId,
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest httpRequest) {
+        try {
+            UUID userId = resolveUserId(userDetails);
+            ForensicResultResponse response = analysisService.getForensicResult(documentId, userId);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

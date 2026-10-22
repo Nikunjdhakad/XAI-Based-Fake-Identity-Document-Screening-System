@@ -12,7 +12,7 @@
 | 3     | Frontend Foundation          | ✅ COMPLETE     |
 | 4     | OCR                          | ✅ COMPLETE     |
 | 5     | Metadata Analysis            | ✅ COMPLETE     |
-| 6     | Identity Consistency         | ⬜ NOT STARTED |
+| 6     | Identity Consistency         | ✅ COMPLETE     |
 | 7     | Image Forensics              | ⬜ NOT STARTED |
 | 8     | Face Verification            | ⬜ NOT STARTED |
 | 9     | AI Manipulation Screening    | ⬜ NOT STARTED |
@@ -22,6 +22,27 @@
 | 13    | Evaluation                   | ⬜ NOT STARTED |
 | 14    | Hardening                    | ⬜ NOT STARTED |
 | 15    | Final Documentation          | ⬜ NOT STARTED |
+
+---
+
+## Phase 6 — Identity Consistency — Details
+
+### Completed Items
+
+- [x] **Python identity module** (`ai-service/app/modules/identity.py`) — rule-based checks on OCR output
+- [x] **Date detection** — 3 formats (DD/MM/YYYY, YYYY-MM-DD, DD Month YYYY) with deduplication and validation
+- [x] **Field detection** — labelled fields (name, date, ID, institution), ID number patterns, name extraction
+- [x] **9 consistency rules**: date presence, future dates, date range plausibility, impossible dates, name presence, ID presence, date ordering, required fields, sufficient text, name consistency
+- [x] **Consistency verdict** — inconsistent if any HIGH check fails or 2+ MEDIUM checks fail
+- [x] **`/internal/analyze`** now runs IDENTITY after OCR when requested (depends on OCR output)
+- [x] **Health endpoint** reports `identity: AVAILABLE`
+- [x] **Flyway V10** — `identity_consistency_results` table
+- [x] **`IdentityConsistencyResult` entity** + repository
+- [x] **`IdentityConsistencyResponse` DTO**
+- [x] **`AnalysisService`** updated — persists identity results, default modules now `OCR,METADATA,IDENTITY`
+- [x] **`GET /api/documents/{id}/analysis/identity`** endpoint
+- [x] **Python tests** — 25 identity tests (availability, schema, NOT_APPLICABLE cases, rule checks, date detection, endpoint)
+- [x] **62 Python tests total** (1 skipped), **24 Spring Boot tests** — all green
 
 ---
 

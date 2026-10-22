@@ -14,13 +14,15 @@ from fastapi.responses import JSONResponse
 
 from app.modules import ocr as ocr_module
 from app.modules import metadata as metadata_module
+from app.modules import identity as identity_module
+from app.modules import forensics as forensics_module
 
 API_KEY = os.getenv("AI_SERVICE_API_KEY", "dev-api-key")
 
 app = FastAPI(
     title="VeriLens AI Service",
     description="Internal AI/CV analysis service for VeriLens document screening.",
-    version="0.3.0",
+    version="0.5.0",
     docs_url="/internal/docs",
     redoc_url=None,
 )
@@ -55,37 +57,39 @@ async def health():
         "service": "verilens-ai-service",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "modules": {
-            "ocr":             "AVAILABLE" if ocr_module.is_available() else "UNAVAILABLE",
-            "metadata":        "AVAILABLE",
-            "forensics":       "UNAVAILABLE",
-            "face":            "UNAVAILABLE",
-            "aiManipulation":  "UNAVAILABLE",
+            "ocr":              "AVAILABLE" if ocr_module.is_available() else "UNAVAILABLE",
+            "metadata":         "AVAILABLE",
+            "identity":         "AVAILABLE",
+            "forensics":        "AVAILABLE" if forensics_module.is_available() else "UNAVAILABLE",
+            "face":             "UNAVAILABLE",
+            "aiManipulation":   "UNAVAILABLE",
         },
     }
 
 
 # ---------------------------------------------------------------------------
-# Analyze endpoint — Phase 4: OCR, Phase 5: Metadata
+# Analyze endpoint — Phases 4–7
 # ---------------------------------------------------------------------------
 @app.post("/internal/analyze")
 async def analyze(
     file: UploadFile = File(...),
     documentId: str = Form(...),
-    modules: str = Form(default="OCR,METADATA"),
+    modules: str = Form(default="OCR,METADATA,IDENTITY,FORENSICS"),
 ):
     """
     Run analysis modules on the uploaded document.
 
-    Phase 4: OCR
-    Phase 5: Metadata analysis
+    Phase 4: OCR (Tesseract)
+    Phase 5: Metadata analysis (Pillow + PyMuPDF)
+    Phase 6: Identity consistency (rule-based, depends on OCR output)
+    Phase 7: Image forensics (OpenCV — ELA, noise, edge analysis)
     Other modules return NOT_APPLICABLE until their phases are implemented.
-    The module list is comma-separated (e.g., "OCR,METADATA").
     """
     start = time.time()
 
     file_bytes = await file.read()
     mime_type = file.content_type or "application/octet-stream"
-    requested = {m.strip().upper() for m in modules.split(",")} if modules else {"OCR", "METADATA"}
+    requested = {m.strip().upper() for m in modules.split(",")} if modules else {"OCR", "METADATA", "IDENTITY", "FORENSICS"}
 
     module_results: dict = {}
 
@@ -101,8 +105,21 @@ async def analyze(
     else:
         module_results["metadata"] = {"status": "NOT_APPLICABLE"}
 
+    # --- Identity Consistency (Phase 6) — depends on OCR output ---
+    if "IDENTITY" in requested:
+        ocr_output = module_results.get("ocr", {})
+        module_results["identity"] = identity_module.run(ocr_output)
+    else:
+        module_results["identity"] = {"status": "NOT_APPLICABLE"}
+
+    # --- Image Forensics (Phase 7) ---
+    if "FORENSICS" in requested:
+        module_results["forensics"] = forensics_module.run(file_bytes, mime_type)
+    else:
+        module_results["forensics"] = {"status": "NOT_APPLICABLE"}
+
     # --- Future modules — NOT_APPLICABLE until implemented ---
-    for key in ("forensics", "identity", "faceVerification", "aiManipulation"):
+    for key in ("faceVerification", "aiManipulation"):
         module_results[key] = {"status": "NOT_APPLICABLE"}
 
     # Determine overall status
