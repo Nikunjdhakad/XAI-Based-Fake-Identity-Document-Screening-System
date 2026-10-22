@@ -13,7 +13,7 @@
 | 4     | OCR                          | ✅ COMPLETE     |
 | 5     | Metadata Analysis            | ✅ COMPLETE     |
 | 6     | Identity Consistency         | ✅ COMPLETE     |
-| 7     | Image Forensics              | ⬜ NOT STARTED |
+| 7     | Image Forensics              | ✅ COMPLETE     |
 | 8     | Face Verification            | ⬜ NOT STARTED |
 | 9     | AI Manipulation Screening    | ⬜ NOT STARTED |
 | 10    | Evidence Fusion & Risk Scoring | ⬜ NOT STARTED |
@@ -22,6 +22,29 @@
 | 13    | Evaluation                   | ⬜ NOT STARTED |
 | 14    | Hardening                    | ⬜ NOT STARTED |
 | 15    | Final Documentation          | ⬜ NOT STARTED |
+
+---
+
+## Phase 7 — Image Forensics — Details
+
+### Completed Items
+
+- [x] **Python forensics module** (`ai-service/app/modules/forensics.py`) — OpenCV-based explainable baseline techniques
+- [x] **Error Level Analysis (ELA)** — re-save at known JPEG quality, compute pixel-level difference, detect high-error regions with bounding boxes
+- [x] **Noise inconsistency** — Laplacian-based local noise variance, detect blocks with anomalous noise patterns (splicing indicators)
+- [x] **Edge density analysis** — Canny edge detection, detect blocks with unusually high edge density (copy-paste indicators)
+- [x] **Risk score** — severity-weighted normalised score (0.0–1.0) from aggregated findings
+- [x] **Suspicious regions** — bounding boxes from all three techniques, capped at 20, with source/confidence labels
+- [x] **OpenCV + NumPy** added to requirements.txt and Dockerfile
+- [x] **`/internal/analyze`** runs FORENSICS when requested
+- [x] **Health endpoint** reports `forensics: AVAILABLE`
+- [x] **Flyway V11** — `forensic_results` table
+- [x] **`ForensicResult` entity** + `ForensicResultRepository`
+- [x] **`ForensicResultResponse` DTO**
+- [x] **`AnalysisService`** updated — persists forensic results, default modules now `OCR,METADATA,IDENTITY,FORENSICS`
+- [x] **`GET /api/documents/{id}/analysis/forensics`** endpoint
+- [x] **Python tests** — 17 forensics tests (availability, schema, findings structure, regions, endpoint)
+- [x] **79 Python tests total** (1 skipped), **24 Spring Boot tests** — all green
 
 ---
 
