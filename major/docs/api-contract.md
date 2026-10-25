@@ -1,8 +1,8 @@
 # VeriLens — API Contract
 
 **Version:** 0.1.0  
-**Phase:** 2 — Backend Foundation  
-**Last updated:** 2026-10-20
+**Phase:** 9 — AI Manipulation Screening  
+**Last updated:** 2026-10-25
 
 ---
 
@@ -307,6 +307,47 @@ Get full analysis results.
 ```
 
 The `modules` sub-objects are defined per-module in [ai-modules.md](ai-modules.md).
+
+---
+
+#### Per-Module Result Endpoints
+
+After analysis completes, individual module results can be retrieved directly:
+
+##### GET /api/documents/{id}/analysis/ocr
+Returns the latest `OcrResultResponse` (extractedText, fields, confidence, status).
+
+##### GET /api/documents/{id}/analysis/metadata
+Returns the latest `MetadataResultResponse` (file properties, anomalies, evidence score, status).
+
+##### GET /api/documents/{id}/analysis/identity
+Returns the latest `IdentityConsistencyResponse` (consistency checks, consistent boolean, status).
+
+##### GET /api/documents/{id}/analysis/forensics
+Returns the latest `ForensicResultResponse` (risk score, ELA mean error, noise/edge stats, findings, suspicious regions, status).
+
+##### GET /api/documents/{id}/analysis/face
+Returns the latest `FaceVerificationResponse` (similarity, threshold, status: POSSIBLE_MATCH | POSSIBLE_MISMATCH | NOT_APPLICABLE | FAILED, face detection flags).
+
+##### GET /api/documents/{id}/analysis/ai-manipulation
+Returns the latest `AiManipulationResponse` (Phase 9):
+```json
+{
+  "id": "uuid",
+  "taskId": "uuid",
+  "documentId": "uuid",
+  "status": "SUCCESS | FAILED | NOT_APPLICABLE",
+  "riskScore": 0.4520,
+  "manipulationType": "NONE_DETECTED | SPLICING | INPAINTING | GENERATION | UNKNOWN",
+  "confidence": 0.6500,
+  "findingsJson": "[...]",
+  "suspiciousRegionsJson": "[...]",
+  "modelInfoJson": "{...}",
+  "errorMessage": null,
+  "processingTimeMs": 48,
+  "createdAt": "ISO-8601"
+}
+```
 
 ---
 

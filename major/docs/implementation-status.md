@@ -1,6 +1,6 @@
 # VeriLens — Implementation Status
 
-**Last updated:** 2026-10-20
+**Last updated:** 2026-10-25
 
 ---
 
@@ -15,13 +15,37 @@
 | 6     | Identity Consistency         | ✅ COMPLETE     |
 | 7     | Image Forensics              | ✅ COMPLETE     |
 | 8     | Face Verification            | ✅ COMPLETE     |
-| 9     | AI Manipulation Screening    | ⬜ NOT STARTED |
-| 10    | Evidence Fusion & Risk Scoring | ⬜ NOT STARTED |
+| 9     | AI Manipulation Screening    | ✅ COMPLETE     |
+| 10    | Evidence Fusion & Risk Scoring | ⬜ UP NEXT     |
 | 11    | Suspicious Region Viewer     | ⬜ NOT STARTED |
 | 12    | Reports                      | ⬜ NOT STARTED |
 | 13    | Evaluation                   | ⬜ NOT STARTED |
 | 14    | Hardening                    | ⬜ NOT STARTED |
 | 15    | Final Documentation          | ⬜ NOT STARTED |
+
+---
+
+## Phase 9 — AI Manipulation Screening — Details
+
+### Completed Items
+
+- [x] **Python AI manipulation module** (`ai-service/app/modules/ai_manipulation.py`) — Explainable, frequency-domain and statistical screening with 4 complementary techniques:
+  1. **Spectral Analysis (2D FFT)**: detects high-frequency energy reduction and periodic mid-frequency GAN grid peaks
+  2. **JPEG Ghost Detection**: multi-quality re-compression (Q=50, 60, 70, 80, 90) detects block error variance indicating copy-paste/splicing
+  3. **Gradient Consistency**: Sobel gradient magnitude block variance detects unnaturally smooth inpainting fills
+  4. **Texture Regularity**: Local Binary Pattern (LBP) histogram uniformity and Shannon entropy detect synthetic AI-generated textures
+- [x] **Inferred manipulation type**: `NONE_DETECTED`, `SPLICING`, `INPAINTING`, `GENERATION`, `UNKNOWN` based on technique findings
+- [x] **Suspicious regions**: spatial bounding boxes (`x`, `y`, `width`, `height`, `confidence`, `description`) capped at 15 regions
+- [x] **Model/technique info**: name, version, techniques, limitations, and benchmark documented in response schema
+- [x] **Integration in `main.py`**: `/internal/analyze` pipeline wires `AI_MANIPULATION`, health endpoint includes status, module list updated
+- [x] **Flyway V13** (`V13__create_ai_manipulation_results_table.sql`): `ai_manipulation_results` table with task_id, document_id, status, risk_score, manipulation_type, confidence, findings_json, suspicious_regions_json, model_info_json
+- [x] **`AiManipulationResult` entity** (`com.verilens.entity.AiManipulationResult`)
+- [x] **`AiManipulationResultRepository`** (`com.verilens.repository.AiManipulationResultRepository`)
+- [x] **`AiManipulationResponse` DTO** (`com.verilens.dto.AiManipulationResponse`)
+- [x] **`AnalysisService`** updated: injects repository, persists AI manipulation results, provides `getAiManipulationResult(documentId, userId)`, sets default modules
+- [x] **`AnalysisController`** updated: `GET /api/documents/{documentId}/analysis/ai-manipulation`
+- [x] **Python tests** (`tests/test_ai_manipulation.py`): 40 comprehensive tests covering availability, schema, individual techniques, findings, regions, error handling, risk scores, endpoint
+- [x] **Documentation**: `api-contract.md`, `ai-modules.md`, `decisions.md` (DEC-010), `implementation-status.md`
 
 ---
 

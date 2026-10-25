@@ -38,14 +38,14 @@ Document
 
 | Module                  | Phase | Status      |
 | ----------------------- | ----- | ----------- |
-| OCR                     | 4     | NOT STARTED |
-| Image Forensics         | 7     | NOT STARTED |
-| Metadata Analysis       | 5     | NOT STARTED |
-| Identity Consistency    | 6     | NOT STARTED |
-| Face Verification       | 8     | NOT STARTED |
-| AI Manipulation Screening | 9   | NOT STARTED |
-| Evidence Fusion         | 10    | NOT STARTED |
-| Risk Score Engine       | 10    | NOT STARTED |
+| OCR                     | 4     | ✅ COMPLETE |
+| Image Forensics         | 7     | ✅ COMPLETE |
+| Metadata Analysis       | 5     | ✅ COMPLETE |
+| Identity Consistency    | 6     | ✅ COMPLETE |
+| Face Verification       | 8     | ✅ COMPLETE |
+| AI Manipulation Screening | 9   | ✅ COMPLETE |
+| Evidence Fusion         | 10    | ⬜ UP NEXT  |
+| Risk Score Engine       | 10    | ⬜ UP NEXT  |
 
 ---
 
@@ -283,16 +283,20 @@ Technology selection will be finalized in Phase 8.
 ### Purpose
 Screen for possible AI-assisted manipulation (inpainting, generation, deepfake edits).
 
-### Technology Selection Process
-1. Identify suitable open/research models
-2. Verify license compatibility
-3. Verify input/output requirements
-4. Test relevance to document manipulation (not just natural photos)
-5. Benchmark on available datasets
-6. Select a defensible baseline
-7. Document all limitations
+### Selected Technology (Phase 9 Baseline)
+For Phase 9, VeriLens implements an explainable, lightweight **frequency-domain and statistical baseline** combining four complementary techniques without requiring multi-gigabyte black-box weights:
 
-**No model has been selected yet.** This will be done in Phase 9.
+1. **Spectral Analysis (2D FFT)** — Analyzes 2D power spectra for high-frequency energy loss and periodic mid-frequency peaks (characteristic of convolutional GAN generation artifacts).
+2. **JPEG Ghost Detection** — Re-compresses image blocks across multiple quality levels (50–90) to discover regions with divergent compression histories (splicing / copy-paste manipulation).
+3. **Gradient Consistency Analysis** — Computes Sobel gradient magnitude variance across 32×32 pixel blocks to detect unnaturally smooth regions typical of diffusion or inpainting fills.
+4. **Texture Regularity Analysis (LBP)** — Measures Local Binary Pattern histogram uniformity and Shannon entropy; highly uniform local textures suggest synthetic AI generation.
+
+**Limitations Documented**:
+- High-quality diffusion models with post-processing or natural noise injection may evade purely frequency-based detection.
+- Severe downscaling, aggressive social media compression, or screenshot re-encoding can attenuate high frequencies naturally, leading to false positives.
+- Phase 13 evaluation will benchmark deep learning detectors against this baseline.
+
+**Status:** ✅ IMPLEMENTED (Phase 9)
 
 ### Input
 - Document image

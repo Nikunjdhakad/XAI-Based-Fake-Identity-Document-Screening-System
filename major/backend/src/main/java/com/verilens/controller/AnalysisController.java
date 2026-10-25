@@ -1,5 +1,6 @@
 package com.verilens.controller;
 
+import com.verilens.dto.AiManipulationResponse;
 import com.verilens.dto.AnalysisTaskResponse;
 import com.verilens.dto.ErrorResponse;
 import com.verilens.dto.FaceVerificationResponse;
@@ -221,6 +222,26 @@ public class AnalysisController {
         try {
             UUID userId = resolveUserId(userDetails);
             FaceVerificationResponse response = analysisService.getFaceResult(documentId, userId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(404, "Not Found", e.getMessage(),
+                            httpRequest.getRequestURI()));
+        }
+    }
+
+    /**
+     * GET /api/documents/{documentId}/analysis/ai-manipulation — Retrieve AI manipulation screening results.
+     * Available after analysis completes (Phase 9+).
+     */
+    @GetMapping("/ai-manipulation")
+    public ResponseEntity<?> getAiManipulationResult(
+            @PathVariable UUID documentId,
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest httpRequest) {
+        try {
+            UUID userId = resolveUserId(userDetails);
+            AiManipulationResponse response = analysisService.getAiManipulationResult(documentId, userId);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

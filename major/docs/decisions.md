@@ -211,4 +211,30 @@ This document records architectural and technical decisions made during developm
 
 ---
 
+### DEC-010: Explainable Frequency-Domain and Statistical Baseline for AI Manipulation Screening
+
+**Date:** 2026-10-25  
+**Phase:** 9  
+**Status:** ACCEPTED
+
+**Context:** Phase 9 requires screening for possible AI-assisted manipulation (splicing, inpainting, generation) in identity documents. Deep learning detectors often require multi-gigabyte weight downloads, have high false-positive rates on compressed documents, and lack interpretability.
+
+**Decision:** Implement an explainable baseline using four frequency-domain and statistical techniques:
+1. **Spectral Analysis (2D FFT)**: detects high-frequency energy reduction and periodic GAN convolutional artifacts.
+2. **JPEG Ghost Detection**: multi-quality re-compression (Q=50–90) identifies block error divergence indicating copy-paste splicing.
+3. **Gradient Consistency Analysis**: Sobel gradient magnitude block variance detects unnaturally smooth inpainting regions.
+4. **Texture Regularity Analysis**: Local Binary Pattern (LBP) histogram uniformity and entropy identify synthetic textures.
+
+**Rationale:**
+- Complies strictly with the master specification's mandate to "start with explainable baseline techniques" and never claim 100% certainty.
+- Runs with minimal latency (~50ms) on CPU without heavy external model downloads or GPU requirements.
+- Generates transparent, human-auditable spatial bounding boxes (suspicious regions) and confidence values.
+- Serves as the benchmark baseline against which deep learning models can be evaluated in Phase 13.
+
+**Consequences:**
+- The module outputs risk scores and evidence signals, not legal verdicts.
+- Highly compressed or resized images may attenuate high frequencies naturally; weighted scoring and fusion mitigates single-technique false positives.
+
+---
+
 *New decisions will be appended as they arise.*

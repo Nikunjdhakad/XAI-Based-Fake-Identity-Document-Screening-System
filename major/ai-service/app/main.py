@@ -18,13 +18,14 @@ from app.modules import metadata as metadata_module
 from app.modules import identity as identity_module
 from app.modules import forensics as forensics_module
 from app.modules import face as face_module
+from app.modules import ai_manipulation as ai_manipulation_module
 
 API_KEY = os.getenv("AI_SERVICE_API_KEY", "dev-api-key")
 
 app = FastAPI(
     title="VeriLens AI Service",
     description="Internal AI/CV analysis service for VeriLens document screening.",
-    version="0.6.0",
+    version="0.7.0",
     docs_url="/internal/docs",
     redoc_url=None,
 )
@@ -64,19 +65,19 @@ async def health():
             "identity":         "AVAILABLE",
             "forensics":        "AVAILABLE" if forensics_module.is_available() else "UNAVAILABLE",
             "face":             "AVAILABLE" if face_module.is_available() else "UNAVAILABLE",
-            "aiManipulation":   "UNAVAILABLE",
+            "aiManipulation":   "AVAILABLE" if ai_manipulation_module.is_available() else "UNAVAILABLE",
         },
     }
 
 
 # ---------------------------------------------------------------------------
-# Analyze endpoint — Phases 4–8
+# Analyze endpoint — Phases 4–9
 # ---------------------------------------------------------------------------
 @app.post("/internal/analyze")
 async def analyze(
     file: UploadFile = File(...),
     documentId: str = Form(...),
-    modules: str = Form(default="OCR,METADATA,IDENTITY,FORENSICS,FACE"),
+    modules: str = Form(default="OCR,METADATA,IDENTITY,FORENSICS,FACE,AI_MANIPULATION"),
     referenceFace: Optional[UploadFile] = File(default=None),
 ):
     """
@@ -88,6 +89,7 @@ async def analyze(
     Phase 7: Image forensics (OpenCV — ELA, noise, edge analysis)
     Phase 8: Face verification (OpenCV Haar cascade + HOG features)
               Requires referenceFace upload; returns NOT_APPLICABLE if absent.
+    Phase 9: AI Manipulation screening (frequency-domain + statistical baseline).
     Other modules return NOT_APPLICABLE until their phases are implemented.
     """
     start = time.time()
@@ -95,7 +97,7 @@ async def analyze(
     file_bytes = await file.read()
     mime_type = file.content_type or "application/octet-stream"
     requested = {m.strip().upper() for m in modules.split(",")} if modules else {
-        "OCR", "METADATA", "IDENTITY", "FORENSICS", "FACE"
+        "OCR", "METADATA", "IDENTITY", "FORENSICS", "FACE", "AI_MANIPULATION"
     }
 
     # Read reference face bytes if provided
@@ -141,8 +143,11 @@ async def analyze(
     else:
         module_results["faceVerification"] = {"status": "NOT_APPLICABLE"}
 
-    # --- Future modules ---
-    module_results["aiManipulation"] = {"status": "NOT_APPLICABLE"}
+    # --- AI Manipulation Screening (Phase 9) ---
+    if "AI_MANIPULATION" in requested:
+        module_results["aiManipulation"] = ai_manipulation_module.run(file_bytes, mime_type)
+    else:
+        module_results["aiManipulation"] = {"status": "NOT_APPLICABLE"}
 
     # Determine overall status
     statuses = [v.get("status", "FAILED") for v in module_results.values()]

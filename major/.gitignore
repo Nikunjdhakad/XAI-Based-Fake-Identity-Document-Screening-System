@@ -69,5 +69,7 @@ docker-compose.override.yml
 # Uploads & Generated
 # =========================
 uploads/
+test-uploads/
+backend/test-uploads/
 generated-reports/
 *.tmp

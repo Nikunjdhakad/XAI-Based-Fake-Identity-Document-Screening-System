@@ -2,6 +2,7 @@ package com.verilens.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.verilens.dto.AiManipulationResponse;
 import com.verilens.dto.AnalysisTaskResponse;
 import com.verilens.dto.FaceVerificationResponse;
 import com.verilens.dto.ForensicResultResponse;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
  * Phase 6: Identity consistency (rule-based, depends on OCR output).
  * Phase 7: Image forensics (OpenCV — ELA, noise, edge analysis).
  * Phase 8: Face verification (OpenCV Haar cascade + HOG features).
+ * Phase 9: AI Manipulation screening (frequency-domain + statistical baseline).
  * Analysis runs asynchronously so HTTP responses are not blocked.
  */
 @Service
@@ -48,6 +50,7 @@ public class AnalysisService {
     private final IdentityConsistencyResultRepository identityResultRepository;
     private final ForensicResultRepository forensicResultRepository;
     private final FaceVerificationResultRepository faceResultRepository;
+    private final AiManipulationResultRepository aiManipulationResultRepository;
     private final AiServiceClient aiServiceClient;
     private final StorageService storageService;
     private final ObjectMapper objectMapper;
@@ -61,6 +64,7 @@ public class AnalysisService {
             IdentityConsistencyResultRepository identityResultRepository,
             ForensicResultRepository forensicResultRepository,
             FaceVerificationResultRepository faceResultRepository,
+            AiManipulationResultRepository aiManipulationResultRepository,
             AiServiceClient aiServiceClient,
             StorageService storageService,
             ObjectMapper objectMapper) {
@@ -72,6 +76,7 @@ public class AnalysisService {
         this.identityResultRepository = identityResultRepository;
         this.forensicResultRepository = forensicResultRepository;
         this.faceResultRepository = faceResultRepository;
+        this.aiManipulationResultRepository = aiManipulationResultRepository;
         this.aiServiceClient = aiServiceClient;
         this.storageService = storageService;
         this.objectMapper = objectMapper;
@@ -96,7 +101,7 @@ public class AnalysisService {
         AnalysisTask task = new AnalysisTask();
         task.setDocument(document);
         task.setStatus(AnalysisTaskStatus.QUEUED);
-        task.setRequestedModules(modules != null ? modules : "OCR,METADATA,IDENTITY,FORENSICS,FACE");
+        task.setRequestedModules(modules != null ? modules : "OCR,METADATA,IDENTITY,FORENSICS,FACE,AI_MANIPULATION");
 
         AnalysisTask saved = analysisTaskRepository.save(task);
 
@@ -208,6 +213,19 @@ public class AnalysisService {
         return FaceVerificationResponse.fromEntity(face);
     }
 
+    /**
+     * Get the AI manipulation screening result for the latest analysis of a document.
+     */
+    @Transactional(readOnly = true)
+    public AiManipulationResponse getAiManipulationResult(UUID documentId, UUID userId) {
+        documentRepository.findByIdAndUserId(documentId, userId)
+                .orElseThrow(() -> new RuntimeException("Document not found or access denied"));
+        AiManipulationResult aiManip = aiManipulationResultRepository
+                .findTopByDocumentIdOrderByCreatedAtDesc(documentId)
+                .orElseThrow(() -> new RuntimeException("No AI manipulation result found for this document"));
+        return AiManipulationResponse.fromEntity(aiManip);
+    }
+
     // -------------------------------------------------------------------------
     // Async analysis pipeline
     // -------------------------------------------------------------------------
@@ -272,7 +290,7 @@ public class AnalysisService {
 
             // Dispatch to Python AI service
             String requestedModules = task.getRequestedModules() != null
-                    ? task.getRequestedModules() : "OCR,METADATA,IDENTITY,FORENSICS,FACE";
+                    ? task.getRequestedModules() : "OCR,METADATA,IDENTITY,FORENSICS,FACE,AI_MANIPULATION";
 
             Map<String, Object> aiResponse = aiServiceClient.analyze(
                     document.getId().toString(),
@@ -295,6 +313,7 @@ public class AnalysisService {
             persistIdentityResult(task, document, aiResponse);
             persistForensicResult(task, document, aiResponse);
             persistFaceResult(task, document, aiResponse);
+            persistAiManipulationResult(task, document, aiResponse);
 
             // Derive final status
             String aiStatus = (String) aiResponse.getOrDefault("status", "FAILED");
@@ -368,6 +387,72 @@ public class AnalysisService {
             log.debug("Persisted face result for task {} — status: {}", task.getId(), face.getStatus());
         } catch (Exception e) {
             log.error("Failed to persist face result for task {}: {}", task.getId(), e.getMessage());
+        }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void persistAiManipulationResult(AnalysisTask task, Document document,
+                                              Map<String, Object> aiResponse) {
+        try {
+            Object modulesObj = aiResponse.get("modules");
+            if (!(modulesObj instanceof Map)) return;
+            Map<String, Object> modules = (Map<String, Object>) modulesObj;
+            Object aiManipObj = modules.get("aiManipulation");
+            if (!(aiManipObj instanceof Map)) return;
+            Map<String, Object> aiManipData = (Map<String, Object>) aiManipObj;
+
+            AiManipulationResult aiManip = new AiManipulationResult();
+            aiManip.setTask(task);
+            aiManip.setDocument(document);
+            aiManip.setStatus((String) aiManipData.getOrDefault("status", "FAILED"));
+            aiManip.setErrorMessage((String) aiManipData.get("error"));
+            aiManip.setManipulationType((String) aiManipData.get("manipulationType"));
+
+            Object riskScore = aiManipData.get("riskScore");
+            if (riskScore instanceof Number n) {
+                aiManip.setRiskScore(BigDecimal.valueOf(n.doubleValue()));
+            }
+
+            Object conf = aiManipData.get("confidence");
+            if (conf instanceof Number n) {
+                aiManip.setConfidence(BigDecimal.valueOf(n.doubleValue()));
+            }
+
+            Object ptms = aiManipData.get("processingTimeMs");
+            if (ptms instanceof Number n) aiManip.setProcessingTimeMs(n.longValue());
+
+            // Serialise findings, regions, and model info to JSON
+            Object findings = aiManipData.get("findings");
+            if (findings != null) {
+                try {
+                    aiManip.setFindingsJson(objectMapper.writeValueAsString(findings));
+                } catch (JsonProcessingException ex) {
+                    log.warn("Could not serialise AI manipulation findings: {}", ex.getMessage());
+                }
+            }
+
+            Object regions = aiManipData.get("suspiciousRegions");
+            if (regions != null) {
+                try {
+                    aiManip.setSuspiciousRegionsJson(objectMapper.writeValueAsString(regions));
+                } catch (JsonProcessingException ex) {
+                    log.warn("Could not serialise AI manipulation regions: {}", ex.getMessage());
+                }
+            }
+
+            Object modelInfo = aiManipData.get("modelInfo");
+            if (modelInfo != null) {
+                try {
+                    aiManip.setModelInfoJson(objectMapper.writeValueAsString(modelInfo));
+                } catch (JsonProcessingException ex) {
+                    log.warn("Could not serialise AI manipulation model info: {}", ex.getMessage());
+                }
+            }
+
+            aiManipulationResultRepository.save(aiManip);
+            log.debug("Persisted AI manipulation result for task {} — status: {}", task.getId(), aiManip.getStatus());
+        } catch (Exception e) {
+            log.error("Failed to persist AI manipulation result for task {}: {}", task.getId(), e.getMessage());
         }
     }
 

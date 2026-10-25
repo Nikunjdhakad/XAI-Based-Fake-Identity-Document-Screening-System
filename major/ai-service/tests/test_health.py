@@ -24,14 +24,13 @@ def test_health_returns_up(client):
     assert "timestamp" in data
     assert "modules" in data
 
-    # OCR, metadata, identity, and forensics are now implemented (Phases 4–7)
-    # Face uses CascadeClassifier which may not be available in OpenCV 5
+    # All modules 1–6 (Phases 4–9) are now implemented
     assert data["modules"]["ocr"] in ("AVAILABLE", "UNAVAILABLE")
     assert data["modules"]["metadata"] == "AVAILABLE"
     assert data["modules"]["identity"] == "AVAILABLE"
     assert data["modules"]["forensics"] in ("AVAILABLE", "UNAVAILABLE")
     assert data["modules"]["face"] in ("AVAILABLE", "UNAVAILABLE")
-    assert data["modules"]["aiManipulation"] == "UNAVAILABLE"
+    assert data["modules"]["aiManipulation"] in ("AVAILABLE", "UNAVAILABLE")
 
 
 def test_internal_endpoint_requires_api_key(client):
