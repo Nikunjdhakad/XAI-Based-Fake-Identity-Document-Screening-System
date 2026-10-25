@@ -2,6 +2,7 @@ package com.verilens.controller;
 
 import com.verilens.dto.AnalysisTaskResponse;
 import com.verilens.dto.ErrorResponse;
+import com.verilens.dto.FaceVerificationResponse;
 import com.verilens.dto.ForensicResultResponse;
 import com.verilens.dto.IdentityConsistencyResponse;
 import com.verilens.dto.MetadataResultResponse;
@@ -200,6 +201,26 @@ public class AnalysisController {
         try {
             UUID userId = resolveUserId(userDetails);
             ForensicResultResponse response = analysisService.getForensicResult(documentId, userId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(404, "Not Found", e.getMessage(),
+                            httpRequest.getRequestURI()));
+        }
+    }
+
+    /**
+     * GET /api/documents/{documentId}/analysis/face — Retrieve face verification results.
+     * Available after analysis completes (Phase 8+).
+     */
+    @GetMapping("/face")
+    public ResponseEntity<?> getFaceResult(
+            @PathVariable UUID documentId,
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest httpRequest) {
+        try {
+            UUID userId = resolveUserId(userDetails);
+            FaceVerificationResponse response = analysisService.getFaceResult(documentId, userId);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

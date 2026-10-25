@@ -25,13 +25,13 @@ def test_health_returns_up(client):
     assert "modules" in data
 
     # OCR, metadata, identity, and forensics are now implemented (Phases 4–7)
-    # Other modules should still be UNAVAILABLE
-    assert data["modules"]["ocr"] in ("AVAILABLE", "UNAVAILABLE")  # depends on Tesseract
+    # Face uses CascadeClassifier which may not be available in OpenCV 5
+    assert data["modules"]["ocr"] in ("AVAILABLE", "UNAVAILABLE")
     assert data["modules"]["metadata"] == "AVAILABLE"
     assert data["modules"]["identity"] == "AVAILABLE"
-    assert data["modules"]["forensics"] in ("AVAILABLE", "UNAVAILABLE")  # depends on OpenCV
-    for module_name in ["face", "aiManipulation"]:
-        assert data["modules"][module_name] == "UNAVAILABLE"
+    assert data["modules"]["forensics"] in ("AVAILABLE", "UNAVAILABLE")
+    assert data["modules"]["face"] in ("AVAILABLE", "UNAVAILABLE")
+    assert data["modules"]["aiManipulation"] == "UNAVAILABLE"
 
 
 def test_internal_endpoint_requires_api_key(client):

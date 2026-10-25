@@ -14,7 +14,7 @@
 | 5     | Metadata Analysis            | ✅ COMPLETE     |
 | 6     | Identity Consistency         | ✅ COMPLETE     |
 | 7     | Image Forensics              | ✅ COMPLETE     |
-| 8     | Face Verification            | ⬜ NOT STARTED |
+| 8     | Face Verification            | ✅ COMPLETE     |
 | 9     | AI Manipulation Screening    | ⬜ NOT STARTED |
 | 10    | Evidence Fusion & Risk Scoring | ⬜ NOT STARTED |
 | 11    | Suspicious Region Viewer     | ⬜ NOT STARTED |
@@ -22,6 +22,34 @@
 | 13    | Evaluation                   | ⬜ NOT STARTED |
 | 14    | Hardening                    | ⬜ NOT STARTED |
 | 15    | Final Documentation          | ⬜ NOT STARTED |
+
+---
+
+## Phase 8 — Face Verification — Details
+
+### Completed Items
+
+- [x] **Python face module** (`ai-service/app/modules/face.py`) — OpenCV Haar Cascade face detection + histogram-based feature extraction (HOG-like, 384-dim vector)
+- [x] **NOT_APPLICABLE when no reference face** — checked before any processing
+- [x] **Face detection**: OpenCV `CascadeClassifier` with frontal face Haar cascade; graceful fallback to `NOT_APPLICABLE` when OpenCV 5 (which removed CascadeClassifier) is used on host
+- [x] **Feature extraction**: global pixel histogram (256 bins) + local block histograms (4×4 grid × 8 bins) = 384-dim vector with lighting normalisation
+- [x] **Cosine similarity** with configurable threshold (0.70 default)
+- [x] **Status values**: `POSSIBLE_MATCH`, `POSSIBLE_MISMATCH`, `NOT_APPLICABLE`, `FAILED` — avoids misleading "MATCH/MISMATCH" absolute terms
+- [x] **Reference face** read from `DocumentFile` (FileType.REFERENCE_FACE) and passed to AI service
+- [x] **`AiServiceClient`** updated to support optional second file (`referenceFace`)
+- [x] **`/internal/analyze`** accepts optional `referenceFace` upload
+- [x] **Health endpoint** reports `face: AVAILABLE` in Docker (OpenCV 4.10)
+- [x] **Flyway V12** — `face_verification_results` table
+- [x] **`FaceVerificationResult` entity** + `FaceVerificationResultRepository`
+- [x] **`FaceVerificationResponse` DTO**
+- [x] **`AnalysisService`** updated — passes reference face bytes, persists face results, default modules `OCR,METADATA,IDENTITY,FORENSICS,FACE`
+- [x] **`GET /api/documents/{id}/analysis/face`** endpoint
+- [x] **Python tests** — 15 face tests (availability, schema, NOT_APPLICABLE logic, endpoint)
+- [x] **96 Python tests total** (1 skipped), **24 Spring Boot tests** — all green
+
+### Technology Note
+
+OpenCV `CascadeClassifier` is used for Phase 8 baseline. Deep embedding models (ArcFace, FaceNet) will be evaluated in Phase 13. The current approach produces a `POSSIBLE_MATCH`/`POSSIBLE_MISMATCH` signal — never a definitive identity claim.
 
 ---
 

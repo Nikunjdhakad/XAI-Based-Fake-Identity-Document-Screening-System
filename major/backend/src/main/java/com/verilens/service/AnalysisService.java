@@ -3,6 +3,7 @@ package com.verilens.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.verilens.dto.AnalysisTaskResponse;
+import com.verilens.dto.FaceVerificationResponse;
 import com.verilens.dto.ForensicResultResponse;
 import com.verilens.dto.IdentityConsistencyResponse;
 import com.verilens.dto.MetadataResultResponse;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
  * Phase 5: Metadata analysis connected (Pillow + PyMuPDF).
  * Phase 6: Identity consistency (rule-based, depends on OCR output).
  * Phase 7: Image forensics (OpenCV — ELA, noise, edge analysis).
+ * Phase 8: Face verification (OpenCV Haar cascade + HOG features).
  * Analysis runs asynchronously so HTTP responses are not blocked.
  */
 @Service
@@ -45,6 +47,7 @@ public class AnalysisService {
     private final MetadataResultRepository metadataResultRepository;
     private final IdentityConsistencyResultRepository identityResultRepository;
     private final ForensicResultRepository forensicResultRepository;
+    private final FaceVerificationResultRepository faceResultRepository;
     private final AiServiceClient aiServiceClient;
     private final StorageService storageService;
     private final ObjectMapper objectMapper;
@@ -57,6 +60,7 @@ public class AnalysisService {
             MetadataResultRepository metadataResultRepository,
             IdentityConsistencyResultRepository identityResultRepository,
             ForensicResultRepository forensicResultRepository,
+            FaceVerificationResultRepository faceResultRepository,
             AiServiceClient aiServiceClient,
             StorageService storageService,
             ObjectMapper objectMapper) {
@@ -67,6 +71,7 @@ public class AnalysisService {
         this.metadataResultRepository = metadataResultRepository;
         this.identityResultRepository = identityResultRepository;
         this.forensicResultRepository = forensicResultRepository;
+        this.faceResultRepository = faceResultRepository;
         this.aiServiceClient = aiServiceClient;
         this.storageService = storageService;
         this.objectMapper = objectMapper;
@@ -91,7 +96,7 @@ public class AnalysisService {
         AnalysisTask task = new AnalysisTask();
         task.setDocument(document);
         task.setStatus(AnalysisTaskStatus.QUEUED);
-        task.setRequestedModules(modules != null ? modules : "OCR,METADATA,IDENTITY,FORENSICS");
+        task.setRequestedModules(modules != null ? modules : "OCR,METADATA,IDENTITY,FORENSICS,FACE");
 
         AnalysisTask saved = analysisTaskRepository.save(task);
 
@@ -190,6 +195,19 @@ public class AnalysisService {
         return ForensicResultResponse.fromEntity(forensics);
     }
 
+    /**
+     * Get the face verification result for the latest analysis of a document.
+     */
+    @Transactional(readOnly = true)
+    public FaceVerificationResponse getFaceResult(UUID documentId, UUID userId) {
+        documentRepository.findByIdAndUserId(documentId, userId)
+                .orElseThrow(() -> new RuntimeException("Document not found or access denied"));
+        FaceVerificationResult face = faceResultRepository
+                .findTopByDocumentIdOrderByCreatedAtDesc(documentId)
+                .orElseThrow(() -> new RuntimeException("No face verification result found for this document"));
+        return FaceVerificationResponse.fromEntity(face);
+    }
+
     // -------------------------------------------------------------------------
     // Async analysis pipeline
     // -------------------------------------------------------------------------
@@ -236,16 +254,35 @@ public class AnalysisService {
             byte[] fileBytes = Files.readAllBytes(
                     storageService.resolveFile(docFile.getStoragePath()));
 
+            // Find optional reference face file
+            byte[] refFaceBytes = null;
+            String refFaceName = null;
+            String refFaceMime = null;
+            java.util.Optional<DocumentFile> refFaceOpt = documentFileRepository
+                    .findByDocumentId(document.getId())
+                    .stream()
+                    .filter(f -> f.getFileType() == FileType.REFERENCE_FACE)
+                    .findFirst();
+            if (refFaceOpt.isPresent()) {
+                DocumentFile refFile = refFaceOpt.get();
+                refFaceBytes = Files.readAllBytes(storageService.resolveFile(refFile.getStoragePath()));
+                refFaceName = refFile.getOriginalFilename();
+                refFaceMime = refFile.getMimeType();
+            }
+
             // Dispatch to Python AI service
             String requestedModules = task.getRequestedModules() != null
-                    ? task.getRequestedModules() : "OCR";
+                    ? task.getRequestedModules() : "OCR,METADATA,IDENTITY,FORENSICS,FACE";
 
             Map<String, Object> aiResponse = aiServiceClient.analyze(
                     document.getId().toString(),
                     fileBytes,
                     docFile.getOriginalFilename(),
                     docFile.getMimeType(),
-                    requestedModules);
+                    requestedModules,
+                    refFaceBytes,
+                    refFaceName,
+                    refFaceMime);
 
             if (aiResponse == null) {
                 safeMarkFailed(taskId, "AI service returned no response");
@@ -257,6 +294,7 @@ public class AnalysisService {
             persistMetadataResult(task, document, aiResponse);
             persistIdentityResult(task, document, aiResponse);
             persistForensicResult(task, document, aiResponse);
+            persistFaceResult(task, document, aiResponse);
 
             // Derive final status
             String aiStatus = (String) aiResponse.getOrDefault("status", "FAILED");
@@ -288,6 +326,48 @@ public class AnalysisService {
         } catch (Exception e) {
             log.error("Analysis failed for task {}: {}", taskId, e.getMessage(), e);
             safeMarkFailed(taskId, e.getMessage());
+        }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void persistFaceResult(AnalysisTask task, Document document,
+                                    Map<String, Object> aiResponse) {
+        try {
+            Object modulesObj = aiResponse.get("modules");
+            if (!(modulesObj instanceof Map)) return;
+            Map<String, Object> modules = (Map<String, Object>) modulesObj;
+            Object faceObj = modules.get("faceVerification");
+            if (!(faceObj instanceof Map)) return;
+            Map<String, Object> faceData = (Map<String, Object>) faceObj;
+
+            FaceVerificationResult face = new FaceVerificationResult();
+            face.setTask(task);
+            face.setDocument(document);
+            face.setStatus((String) faceData.getOrDefault("status", "FAILED"));
+            face.setNote((String) faceData.get("note"));
+            face.setReason((String) faceData.get("reason"));
+            face.setErrorMessage((String) faceData.get("error"));
+
+            Object sim = faceData.get("similarity");
+            if (sim instanceof Number n) {
+                face.setSimilarity(BigDecimal.valueOf(n.doubleValue()));
+            }
+            Object thresh = faceData.get("threshold");
+            if (thresh instanceof Number n) {
+                face.setThreshold(BigDecimal.valueOf(n.doubleValue()));
+            }
+            Object docFace = faceData.get("documentFaceDetected");
+            if (docFace instanceof Boolean b) face.setDocumentFaceDetected(b);
+            Object refFace = faceData.get("referenceFaceDetected");
+            if (refFace instanceof Boolean b) face.setReferenceFaceDetected(b);
+
+            Object ptms = faceData.get("processingTimeMs");
+            if (ptms instanceof Number n) face.setProcessingTimeMs(n.longValue());
+
+            faceResultRepository.save(face);
+            log.debug("Persisted face result for task {} — status: {}", task.getId(), face.getStatus());
+        } catch (Exception e) {
+            log.error("Failed to persist face result for task {}: {}", task.getId(), e.getMessage());
         }
     }
 

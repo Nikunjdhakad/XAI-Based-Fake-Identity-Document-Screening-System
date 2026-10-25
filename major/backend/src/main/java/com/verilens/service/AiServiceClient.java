@@ -47,6 +47,22 @@ public class AiServiceClient {
             String filename,
             String contentType,
             String modules) {
+        return analyze(documentId, fileBytes, filename, contentType, modules, null, null, null);
+    }
+
+    /**
+     * Send a document and optional reference face to the Python AI service.
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public Map<String, Object> analyze(
+            String documentId,
+            byte[] fileBytes,
+            String filename,
+            String contentType,
+            String modules,
+            byte[] referenceFaceBytes,
+            String referenceFaceName,
+            String referenceFaceMime) {
 
         String url = config.getUrl() + "/internal/analyze";
 
@@ -68,6 +84,20 @@ public class AiServiceClient {
         body.add("file", new HttpEntity<>(fileResource, filePart));
         body.add("documentId", documentId);
         body.add("modules", modules != null ? modules : "OCR");
+
+        // Add optional reference face
+        if (referenceFaceBytes != null && referenceFaceBytes.length > 0) {
+            ByteArrayResource faceResource = new ByteArrayResource(referenceFaceBytes) {
+                @Override
+                public String getFilename() {
+                    return referenceFaceName != null ? referenceFaceName : "reference.jpg";
+                }
+            };
+            HttpHeaders facePart = new HttpHeaders();
+            facePart.setContentType(MediaType.parseMediaType(
+                    referenceFaceMime != null ? referenceFaceMime : "image/jpeg"));
+            body.add("referenceFace", new HttpEntity<>(faceResource, facePart));
+        }
 
         HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
 
