@@ -8,6 +8,7 @@ import com.verilens.dto.ForensicResultResponse;
 import com.verilens.dto.IdentityConsistencyResponse;
 import com.verilens.dto.MetadataResultResponse;
 import com.verilens.dto.OcrResultResponse;
+import com.verilens.dto.RiskAssessmentResponse;
 import com.verilens.entity.User;
 import com.verilens.repository.UserRepository;
 import com.verilens.service.AnalysisService;
@@ -242,6 +243,26 @@ public class AnalysisController {
         try {
             UUID userId = resolveUserId(userDetails);
             AiManipulationResponse response = analysisService.getAiManipulationResult(documentId, userId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(404, "Not Found", e.getMessage(),
+                            httpRequest.getRequestURI()));
+        }
+    }
+
+    /**
+     * GET /api/documents/{documentId}/analysis/risk — Retrieve evidence fusion risk assessment.
+     * Available after analysis completes (Phase 10+).
+     */
+    @GetMapping("/risk")
+    public ResponseEntity<?> getRiskAssessment(
+            @PathVariable UUID documentId,
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest httpRequest) {
+        try {
+            UUID userId = resolveUserId(userDetails);
+            RiskAssessmentResponse response = analysisService.getRiskAssessment(documentId, userId);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

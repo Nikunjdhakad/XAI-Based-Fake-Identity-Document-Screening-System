@@ -16,12 +16,42 @@
 | 7     | Image Forensics              | ✅ COMPLETE     |
 | 8     | Face Verification            | ✅ COMPLETE     |
 | 9     | AI Manipulation Screening    | ✅ COMPLETE     |
-| 10    | Evidence Fusion & Risk Scoring | ⬜ UP NEXT     |
+| 10    | Evidence Fusion & Risk Scoring | ✅ COMPLETE     |
 | 11    | Suspicious Region Viewer     | ⬜ NOT STARTED |
 | 12    | Reports                      | ⬜ NOT STARTED |
 | 13    | Evaluation                   | ⬜ NOT STARTED |
 | 14    | Hardening                    | ⬜ NOT STARTED |
 | 15    | Final Documentation          | ⬜ NOT STARTED |
+
+---
+
+## Phase 10 — Evidence Fusion & Risk Scoring — Details
+
+### Completed Items
+
+- [x] **`EvidenceFusionService`** — combines all 6 module outputs into one `RiskAssessment`
+- [x] **Transparent weighted baseline v1.0.0**:
+  - Forensics: 25%, AI Manipulation: 25%, Metadata: 15%, Identity: 15%, OCR: 10%, Face: 10%
+  - Risk levels: LOW (0.00–0.33), MEDIUM (0.34–0.66), HIGH (0.67–1.00)
+  - Missing/NOT_APPLICABLE modules excluded from denominator (partial weight redistribution)
+- [x] **Human-readable explanations** generated per module when anomalies detected
+- [x] **Module contributions map** stored for auditability
+- [x] **Scoring version** (`1.0.0`) stored — must be refined in Phase 13 evaluation
+- [x] **Flyway V15** — `risk_assessments` table (unique index on task_id)
+- [x] **Flyway V16** — `risk_level` column added to `documents` table
+- [x] **`RiskAssessment` entity** + `RiskAssessmentRepository`
+- [x] **`RiskAssessmentResponse` DTO**
+- [x] **`Document.riskLevel`** field added — updated by fusion after analysis completes
+- [x] **`DocumentResponse.fromEntity()`** now returns actual `riskLevel` from entity
+- [x] **`AnalysisService`** calls `evidenceFusionService.fuse()` after all module results persisted
+- [x] **`GET /api/documents/{id}/analysis/risk`** endpoint
+- [x] **24 Spring Boot tests** all pass — BUILD SUCCESS
+
+### Important Notes
+
+- Thresholds are **initial estimates** — they will be validated in Phase 13
+- Language in explanations uses "potential manipulation", "elevated risk" — never "definitely fake"
+- Face verification contributes only when a reference face was provided (NOT_APPLICABLE excluded from weight)
 
 ---
 

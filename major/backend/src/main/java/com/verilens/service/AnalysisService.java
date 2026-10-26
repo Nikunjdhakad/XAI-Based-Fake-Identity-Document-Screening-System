@@ -9,6 +9,7 @@ import com.verilens.dto.ForensicResultResponse;
 import com.verilens.dto.IdentityConsistencyResponse;
 import com.verilens.dto.MetadataResultResponse;
 import com.verilens.dto.OcrResultResponse;
+import com.verilens.dto.RiskAssessmentResponse;
 import com.verilens.entity.*;
 import com.verilens.repository.*;
 import org.slf4j.Logger;
@@ -35,6 +36,7 @@ import java.util.stream.Collectors;
  * Phase 7: Image forensics (OpenCV — ELA, noise, edge analysis).
  * Phase 8: Face verification (OpenCV Haar cascade + HOG features).
  * Phase 9: AI Manipulation screening (frequency-domain + statistical baseline).
+ * Phase 10: Evidence Fusion & Risk Scoring.
  * Analysis runs asynchronously so HTTP responses are not blocked.
  */
 @Service
@@ -54,6 +56,7 @@ public class AnalysisService {
     private final AiServiceClient aiServiceClient;
     private final StorageService storageService;
     private final ObjectMapper objectMapper;
+    private final EvidenceFusionService evidenceFusionService;
 
     public AnalysisService(
             AnalysisTaskRepository analysisTaskRepository,
@@ -67,7 +70,8 @@ public class AnalysisService {
             AiManipulationResultRepository aiManipulationResultRepository,
             AiServiceClient aiServiceClient,
             StorageService storageService,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            EvidenceFusionService evidenceFusionService) {
         this.analysisTaskRepository = analysisTaskRepository;
         this.documentRepository = documentRepository;
         this.documentFileRepository = documentFileRepository;
@@ -80,6 +84,7 @@ public class AnalysisService {
         this.aiServiceClient = aiServiceClient;
         this.storageService = storageService;
         this.objectMapper = objectMapper;
+        this.evidenceFusionService = evidenceFusionService;
     }
 
     // -------------------------------------------------------------------------
@@ -214,6 +219,14 @@ public class AnalysisService {
     }
 
     /**
+     * Get the risk assessment for the latest analysis of a document.
+     */
+    @Transactional(readOnly = true)
+    public RiskAssessmentResponse getRiskAssessment(UUID documentId, UUID userId) {
+        return evidenceFusionService.getRiskAssessment(documentId, userId);
+    }
+
+    /**
      * Get the AI manipulation screening result for the latest analysis of a document.
      */
     @Transactional(readOnly = true)
@@ -314,6 +327,9 @@ public class AnalysisService {
             persistForensicResult(task, document, aiResponse);
             persistFaceResult(task, document, aiResponse);
             persistAiManipulationResult(task, document, aiResponse);
+
+            // Phase 10: run evidence fusion after all module results are persisted
+            evidenceFusionService.fuse(task, document);
 
             // Derive final status
             String aiStatus = (String) aiResponse.getOrDefault("status", "FAILED");

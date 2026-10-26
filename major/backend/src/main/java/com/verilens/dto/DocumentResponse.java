@@ -30,7 +30,7 @@ public class DocumentResponse {
         dto.setDocumentType(doc.getDocumentType());
         dto.setDescription(doc.getDescription());
         dto.setStatus(doc.getStatus().name());
-        dto.setRiskLevel(null); // Populated by risk engine in Phase 10
+        dto.setRiskLevel(doc.getRiskLevel()); // Populated by risk engine (Phase 10)
         dto.setFileSize(doc.getFileSize());
         dto.setMimeType(doc.getMimeType());
         dto.setUploadedAt(doc.getCreatedAt());
