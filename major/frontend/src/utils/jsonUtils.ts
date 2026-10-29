@@ -53,3 +53,8 @@ export function parseArray(json: string | null | undefined): unknown[] {
     return [];
   }
 }
+
+/** Wrap a promise to never reject — returns null on failure. */
+export function safePromise<T>(p: Promise<T>): Promise<T | null> {
+  return p.catch(() => null);
+}

@@ -17,11 +17,35 @@
 | 8     | Face Verification            | ✅ COMPLETE     |
 | 9     | AI Manipulation Screening    | ✅ COMPLETE     |
 | 10    | Evidence Fusion & Risk Scoring | ✅ COMPLETE     |
-| 11    | Suspicious Region Viewer     | ⬜ NOT STARTED |
+| 11    | Suspicious Region Viewer     | ✅ COMPLETE     |
 | 12    | Reports                      | ⬜ NOT STARTED |
 | 13    | Evaluation                   | ⬜ NOT STARTED |
 | 14    | Hardening                    | ⬜ NOT STARTED |
 | 15    | Final Documentation          | ⬜ NOT STARTED |
+
+---
+
+## Phase 11 — Suspicious Region Viewer — Details
+
+### Completed Items
+
+- [x] **Results page fully rewritten** — fetches all module results + risk assessment in parallel
+- [x] **Real risk score display** — numeric score (e.g. 74/100) with level-coloured header (HIGH=red, MEDIUM=amber, LOW=green)
+- [x] **Evidence summary table** — all 6 modules with real status (✓/✗/N/A), risk level, and detail summary
+- [x] **Suspicious region overlay** — bounding boxes from forensics (ELA, noise, edge) + AI manipulation (JPEG ghost, gradient) rendered on a schematic document canvas with colour-coded source labels and confidence percentages
+- [x] **Region legend** — lists all source types with matching colours
+- [x] **Risk explanation** — real human-readable findings from evidence fusion, with level-specific summary
+- [x] **Detailed analysis accordions** — expandable per-module sections showing:
+  - OCR: extracted text, page count, confidence
+  - Forensics: risk score, ELA metrics, findings list with severity badges
+  - Metadata: evidence score, anomalies list, properties table
+  - Identity: consistency verdict, failed check counts, check list with pass/fail
+  - Face: match status, similarity percentage, threshold, notes
+  - AI Manipulation: risk score, manipulation type, findings, model info + limitations
+- [x] **JSON utility module** (`utils/jsonUtils.ts`) — typed parse functions for regions, arrays, objects, strings
+- [x] **All TypeScript types** added to `types.ts` for every module response
+- [x] **Build succeeds** — 309 KB JS (95 KB gzip), 22 KB CSS
+- [x] **Docker frontend container rebuilt** and running on port 3000
 
 ---
 

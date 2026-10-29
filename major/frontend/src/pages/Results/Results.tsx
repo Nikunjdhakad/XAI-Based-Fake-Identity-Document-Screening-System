@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import { RiskBadge } from '../../components/RiskBadge/RiskBadge';
 import { StatusBadge } from '../../components/StatusBadge/StatusBadge';
-import { parseArray, parseObject, parseRegions, parseStringArray } from '../../utils/jsonUtils';
+import { parseArray, parseObject, parseRegions, parseStringArray, safePromise } from '../../utils/jsonUtils';
 import type {
   AiManipulationResponse,
   AnalysisTaskResponse,
@@ -147,35 +147,35 @@ function RegionOverlay({ regions }: RegionOverlayProps) {
 // ---------------------------------------------------------------------------
 
 export function Results() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams() as { id?: string };
 
-  const [doc,      setDoc]      = useState<DocumentResponse | null>(null);
-  const [task,     setTask]     = useState<AnalysisTaskResponse | null>(null);
-  const [risk,     setRisk]     = useState<RiskAssessmentResponse | null>(null);
-  const [ocr,      setOcr]      = useState<OcrResultResponse | null>(null);
-  const [meta,     setMeta]     = useState<MetadataResultResponse | null>(null);
-  const [identity, setIdentity] = useState<IdentityConsistencyResponse | null>(null);
-  const [forensics,setForensics]= useState<ForensicResultResponse | null>(null);
-  const [face,     setFace]     = useState<FaceVerificationResponse | null>(null);
-  const [aiManip,  setAiManip]  = useState<AiManipulationResponse | null>(null);
-  const [openMods, setOpenMods] = useState<Record<string, boolean>>({});
+  const [doc,      setDoc]      = useState(null as DocumentResponse | null);
+  const [task,     setTask]     = useState(null as AnalysisTaskResponse | null);
+  const [risk,     setRisk]     = useState(null as RiskAssessmentResponse | null);
+  const [ocr,      setOcr]      = useState(null as OcrResultResponse | null);
+  const [meta,     setMeta]     = useState(null as MetadataResultResponse | null);
+  const [identity, setIdentity] = useState(null as IdentityConsistencyResponse | null);
+  const [forensics,setForensics]= useState(null as ForensicResultResponse | null);
+  const [face,     setFace]     = useState(null as FaceVerificationResponse | null);
+  const [aiManip,  setAiManip]  = useState(null as AiManipulationResponse | null);
+  const [openMods, setOpenMods] = useState({} as { [k: string]: boolean });
   const [error,    setError]    = useState('');
 
   useEffect(() => {
     if (!id) return;
 
-    const safe = <T>(p: Promise<T>): Promise<T | null> => p.catch(() => null);
+    const safe = safePromise;
 
     Promise.all([
-      api.get<DocumentResponse>(`/documents/${id}`),
-      safe(api.get<AnalysisTaskResponse>(`/documents/${id}/analysis`)),
-      safe(api.get<RiskAssessmentResponse>(`/documents/${id}/analysis/risk`)),
-      safe(api.get<OcrResultResponse>(`/documents/${id}/analysis/ocr`)),
-      safe(api.get<MetadataResultResponse>(`/documents/${id}/analysis/metadata`)),
-      safe(api.get<IdentityConsistencyResponse>(`/documents/${id}/analysis/identity`)),
-      safe(api.get<ForensicResultResponse>(`/documents/${id}/analysis/forensics`)),
-      safe(api.get<FaceVerificationResponse>(`/documents/${id}/analysis/face`)),
-      safe(api.get<AiManipulationResponse>(`/documents/${id}/analysis/ai-manipulation`)),
+      api.get(`/documents/${id}`) as Promise<DocumentResponse>,
+      safe(api.get(`/documents/${id}/analysis`) as Promise<AnalysisTaskResponse>),
+      safe(api.get(`/documents/${id}/analysis/risk`) as Promise<RiskAssessmentResponse>),
+      safe(api.get(`/documents/${id}/analysis/ocr`) as Promise<OcrResultResponse>),
+      safe(api.get(`/documents/${id}/analysis/metadata`) as Promise<MetadataResultResponse>),
+      safe(api.get(`/documents/${id}/analysis/identity`) as Promise<IdentityConsistencyResponse>),
+      safe(api.get(`/documents/${id}/analysis/forensics`) as Promise<ForensicResultResponse>),
+      safe(api.get(`/documents/${id}/analysis/face`) as Promise<FaceVerificationResponse>),
+      safe(api.get(`/documents/${id}/analysis/ai-manipulation`) as Promise<AiManipulationResponse>),
     ]).then(([d, t, r, o, m, ident, f, fc, ai]) => {
       setDoc(d);
       setTask(t);
@@ -194,8 +194,10 @@ export function Results() {
     ...parseRegions(aiManip?.suspiciousRegionsJson),
   ];
 
-  const explanations   = parseStringArray(risk?.explanationJson);
-  const contributions  = parseObject(risk?.moduleContributionsJson) as Record<string, number | null>;
+  const explanations  = parseStringArray(risk?.explanationJson);
+  // contributions is available for future UI use (module contribution breakdown)
+  const contributions = parseObject(risk?.moduleContributionsJson) as { [k: string]: number | null };
+  void contributions;
 
   function toggle(key: string) {
     setOpenMods(prev => ({ ...prev, [key]: !prev[key] }));
@@ -600,7 +602,7 @@ function FindingsList({ json }: { json: string | null | undefined }) {
   return (
     <div className={styles.findingsList}>
       {findings.map((item, i) => {
-        const f = item as Record<string, unknown>;
+        const f = item as { [k: string]: unknown };
         return (
           <div key={i} className={styles.findingItem} data-suspicious={String(f['suspicious'])}>
             <span className={styles.findingType}>{String(f['type'] ?? 'Unknown').replace(/_/g, ' ')}</span>
@@ -619,7 +621,7 @@ function AnomalyList({ json }: { json: string | null | undefined }) {
   return (
     <div className={styles.findingsList}>
       {anomalies.map((item, i) => {
-        const a = item as Record<string, unknown>;
+        const a = item as { [k: string]: unknown };
         return (
           <div key={i} className={styles.findingItem} data-suspicious="true">
             <span className={styles.findingType}>{String(a['type'] ?? 'Unknown').replace(/_/g, ' ')}</span>
@@ -638,7 +640,7 @@ function CheckList({ json }: { json: string | null | undefined }) {
   return (
     <div className={styles.findingsList}>
       {checks.map((item, i) => {
-        const c = item as Record<string, unknown>;
+        const c = item as { [k: string]: unknown };
         const passed = Boolean(c['passed']);
         const severity = String(c['severity'] ?? 'LOW');
         return (
@@ -671,8 +673,9 @@ function PropertiesBlock({ json }: { json: string | null | undefined }) {
 
 function ModelInfoBlock({ json }: { json: string | null | undefined }) {
   const info = parseObject(json);
-  if (!info || Object.keys(info).length === 0) return null;
-  const limitations = Array.isArray(info['limitations']) ? (info['limitations'] as string[]) : [];
+  if (Object.keys(info).length === 0) return null;
+  const rawLimitations = info['limitations'];
+  const limitations: string[] = Array.isArray(rawLimitations) ? (rawLimitations as string[]) : [];
   return (
     <div className={styles.modelInfo}>
       <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '12px 0 4px' }}>
@@ -680,7 +683,7 @@ function ModelInfoBlock({ json }: { json: string | null | undefined }) {
       </p>
       {limitations.length > 0 && (
         <ul className={styles.limitationList}>
-          {limitations.map((l: string, i: number) => <li key={i}>{l}</li>)}
+          {limitations.map((l, i) => <li key={i}>{l}</li>)}
         </ul>
       )}
     </div>
