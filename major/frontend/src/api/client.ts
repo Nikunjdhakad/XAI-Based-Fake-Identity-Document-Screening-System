@@ -50,9 +50,38 @@ async function request<T>(
   return data as unknown as T;
 }
 
+/**
+ * Download a binary response (e.g. PDF) as a Blob and trigger a browser download.
+ * Returns `true` on success.
+ */
+async function downloadBlob(path: string, filename: string): Promise<boolean> {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}${path}`, { method: 'GET', headers });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as ApiErrorShape;
+    throw new ApiException(data.message || 'Download failed', res.status);
+  }
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  return true;
+}
+
 export const api = {
   get: <T>(path: string) => request<T>('GET', path),
   post: <T>(path: string, body: unknown) => request<T>('POST', path, body),
   postForm: <T>(path: string, form: FormData) => request<T>('POST', path, form, true),
   delete: <T>(path: string) => request<T>('DELETE', path),
+  download: (path: string, filename: string) => downloadBlob(path, filename),
 };

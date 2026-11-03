@@ -8,6 +8,7 @@ import com.verilens.dto.ForensicResultResponse;
 import com.verilens.dto.IdentityConsistencyResponse;
 import com.verilens.dto.MetadataResultResponse;
 import com.verilens.dto.OcrResultResponse;
+import com.verilens.dto.ReportResponse;
 import com.verilens.dto.RiskAssessmentResponse;
 import com.verilens.entity.User;
 import com.verilens.repository.UserRepository;
@@ -264,6 +265,50 @@ public class AnalysisController {
             UUID userId = resolveUserId(userDetails);
             RiskAssessmentResponse response = analysisService.getRiskAssessment(documentId, userId);
             return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(404, "Not Found", e.getMessage(),
+                            httpRequest.getRequestURI()));
+        }
+    }
+
+    /**
+     * GET /api/documents/{documentId}/report — Get report metadata.
+     * Phase 12 — Reports
+     */
+    @GetMapping("/report")
+    public ResponseEntity<?> getReport(
+            @PathVariable UUID documentId,
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest httpRequest) {
+        try {
+            UUID userId = resolveUserId(userDetails);
+            ReportResponse response = analysisService.getReport(documentId, userId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(404, "Not Found", e.getMessage(),
+                            httpRequest.getRequestURI()));
+        }
+    }
+
+    /**
+     * GET /api/documents/{documentId}/report/download — Download PDF report.
+     * Phase 12 — Reports
+     */
+    @GetMapping("/report/download")
+    public ResponseEntity<?> downloadReport(
+            @PathVariable UUID documentId,
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest httpRequest) {
+        try {
+            UUID userId = resolveUserId(userDetails);
+            byte[] pdfBytes = analysisService.downloadReport(documentId, userId);
+            return ResponseEntity.ok()
+                    .header("Content-Type", "application/pdf")
+                    .header("Content-Disposition",
+                            "attachment; filename=\"verilens-report-" + documentId + ".pdf\"")
+                    .body(pdfBytes);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ErrorResponse(404, "Not Found", e.getMessage(),

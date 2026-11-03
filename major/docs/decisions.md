@@ -237,4 +237,29 @@ This document records architectural and technical decisions made during developm
 
 ---
 
+### DEC-011: PDF Report Generation with Apache PDFBox
+
+**Date:** 2026-11-03  
+**Phase:** 12  
+**Status:** ACCEPTED
+
+**Context:** Phase 12 requires a downloadable screening report summarising all analysis results, risk assessment, module findings, and explanations in a portable, printable format.
+
+**Decision:** Use Apache PDFBox 3.0.3 (Apache 2.0 license) to generate PDF reports server-side in `ReportService`. Reports are generated automatically after evidence fusion completes, stored on disk alongside uploaded documents, and served via authenticated REST endpoints. The frontend triggers download using a Blob-based fetch to `GET /api/documents/{id}/analysis/report/download`.
+
+**Rationale:**
+- PDFBox is a mature, pure-Java PDF library with no native dependencies — ideal for Spring Boot.
+- Server-side generation ensures the report content matches exactly what was persisted in PostgreSQL (no client-side rendering discrepancies).
+- PDF format is universally viewable, printable, and suitable for audit/archival purposes.
+- Automatic generation after fusion ensures every completed analysis has a downloadable report without user intervention.
+
+**Alternatives considered:**
+- iText — more feature-rich but AGPL licensed, requiring a commercial license for proprietary use.
+- Client-side PDF generation (jsPDF, html2pdf) — rejected; would require exposing all data to the browser and risk inconsistencies with server-side data.
+- HTML report with browser print — rejected; not portable or archivable as a standalone file.
+
+**Consequences:** Reports are stored as files on disk (alongside uploads). The `reports` table tracks metadata. Report file cleanup follows document deletion via `ON DELETE CASCADE`. The frontend API client gained blob download capability (`api.download()`) for binary responses.
+
+---
+
 *New decisions will be appended as they arise.*

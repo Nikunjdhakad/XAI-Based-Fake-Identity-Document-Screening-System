@@ -226,3 +226,31 @@
 .limitationList li { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
 
 .actions { display: flex; gap: 12px; }
+
+
+/* ── Report card (Phase 12) ── */
+.reportCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+}
+.reportInfo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.reportIcon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.reportTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.reportMeta {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}

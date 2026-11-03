@@ -13,6 +13,7 @@ import type {
   IdentityConsistencyResponse,
   MetadataResultResponse,
   OcrResultResponse,
+  ReportResponse,
   RiskAssessmentResponse,
   SuspiciousRegion,
 } from '../../types';
@@ -158,8 +159,10 @@ export function Results() {
   const [forensics,setForensics]= useState(null as ForensicResultResponse | null);
   const [face,     setFace]     = useState(null as FaceVerificationResponse | null);
   const [aiManip,  setAiManip]  = useState(null as AiManipulationResponse | null);
+  const [report,   setReport]   = useState(null as ReportResponse | null);
   const [openMods, setOpenMods] = useState({} as { [k: string]: boolean });
   const [error,    setError]    = useState('');
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -176,7 +179,8 @@ export function Results() {
       safe(api.get(`/documents/${id}/analysis/forensics`) as Promise<ForensicResultResponse>),
       safe(api.get(`/documents/${id}/analysis/face`) as Promise<FaceVerificationResponse>),
       safe(api.get(`/documents/${id}/analysis/ai-manipulation`) as Promise<AiManipulationResponse>),
-    ]).then(([d, t, r, o, m, ident, f, fc, ai]) => {
+      safe(api.get(`/documents/${id}/analysis/report`) as Promise<ReportResponse>),
+    ]).then(([d, t, r, o, m, ident, f, fc, ai, rpt]) => {
       setDoc(d);
       setTask(t);
       setRisk(r);
@@ -186,6 +190,7 @@ export function Results() {
       setForensics(f);
       setFace(fc);
       setAiManip(ai);
+      setReport(rpt);
     }).catch(e => setError(e.message));
   }, [id]);
 
@@ -203,10 +208,25 @@ export function Results() {
     setOpenMods(prev => ({ ...prev, [key]: !prev[key] }));
   }
 
+  async function handleDownloadReport() {
+    if (!id || downloading) return;
+    setDownloading(true);
+    try {
+      const filename = `VeriLens_Report_${doc?.filename ?? id}.pdf`;
+      await api.download(`/documents/${id}/analysis/report/download`, filename);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Download failed';
+      alert(`Report download failed: ${msg}`);
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   if (error) return <div className={styles.state} style={{ color: 'var(--risk-high)' }}>{error}</div>;
   if (!doc)  return <div className={styles.state}>Loading…</div>;
 
   const analysisComplete = doc.status === 'COMPLETED' || doc.status === 'PARTIALLY_COMPLETED';
+  const reportAvailable = report != null;
 
   // ── Module summary rows ──────────────────────────────────────────────────
 
@@ -542,11 +562,42 @@ export function Results() {
         </ModuleAccordion>
       </div>
 
+      {/* ── Report info ── */}
+      {reportAvailable && (
+        <div className={styles.reportCard}>
+          <div className={styles.reportInfo}>
+            <span className={styles.reportIcon}>📄</span>
+            <div>
+              <div className={styles.reportTitle}>Screening Report Available</div>
+              <div className={styles.reportMeta}>
+                Generated {formatDate(report.generatedAt)}
+                {report.fileSize != null && <> · {(report.fileSize / 1024).toFixed(0)} KB</>}
+                {' '} · {report.format}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Actions ── */}
       <div className={styles.actions}>
-        <button className="btn btn-ghost" disabled title="Available in Phase 12">
-          ↓ Download Report
-        </button>
+        {reportAvailable ? (
+          <button
+            className="btn btn-primary"
+            onClick={handleDownloadReport}
+            disabled={downloading}
+          >
+            {downloading ? '⏳ Downloading…' : '↓ Download Report'}
+          </button>
+        ) : (
+          <button
+            className="btn btn-ghost"
+            disabled
+            title={analysisComplete ? 'Report is being generated…' : 'Report is generated after analysis completes'}
+          >
+            ↓ Download Report
+          </button>
+        )}
         <Link to={`/documents/${id}/analysis`} className="btn btn-ghost">
           ← Back to Analysis
         </Link>

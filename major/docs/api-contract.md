@@ -1,8 +1,8 @@
 # VeriLens — API Contract
 
 **Version:** 0.1.0  
-**Phase:** 9 — AI Manipulation Screening  
-**Last updated:** 2026-10-25
+**Phase:** 12 — Reports  
+**Last updated:** 2026-11-03
 
 ---
 
@@ -353,28 +353,39 @@ Returns the latest `AiManipulationResponse` (Phase 9):
 
 ### 2.4 Reports
 
-#### GET /api/documents/{id}/report
+> **Status (Phase 12): ✅ Implemented** — Report generation, metadata, and download endpoints are live. Reports are auto-generated after evidence fusion completes.
+
+#### GET /api/documents/{id}/analysis/report
 
 Get the screening report metadata.
+
+**Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
 ```json
 {
   "reportId": "uuid",
   "documentId": "uuid",
+  "format": "PDF",
+  "fileSize": 12345,
   "generatedAt": "ISO-8601",
-  "riskLevel": "string",
-  "riskScore": 0.0
+  "downloadUrl": "/api/documents/{id}/report/download"
 }
 ```
 
+**Errors:** `404` report not yet generated, `403` not owner
+
 ---
 
-#### GET /api/documents/{id}/report/download
+#### GET /api/documents/{id}/analysis/report/download
 
 Download the screening report as PDF.
 
-**Response:** `200 application/pdf`
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `200 application/pdf` with `Content-Disposition: attachment; filename="VeriLens_Report_....pdf"`
+
+**Errors:** `404` report not found, `403` not owner
 
 ---
 

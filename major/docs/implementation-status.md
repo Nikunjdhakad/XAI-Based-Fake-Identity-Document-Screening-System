@@ -1,6 +1,6 @@
 # VeriLens — Implementation Status
 
-**Last updated:** 2026-10-25
+**Last updated:** 2026-11-03
 
 ---
 
@@ -18,10 +18,42 @@
 | 9     | AI Manipulation Screening    | ✅ COMPLETE     |
 | 10    | Evidence Fusion & Risk Scoring | ✅ COMPLETE     |
 | 11    | Suspicious Region Viewer     | ✅ COMPLETE     |
-| 12    | Reports                      | ⬜ NOT STARTED |
+| 12    | Reports                      | ✅ COMPLETE     |
 | 13    | Evaluation                   | ⬜ NOT STARTED |
 | 14    | Hardening                    | ⬜ NOT STARTED |
 | 15    | Final Documentation          | ⬜ NOT STARTED |
+
+---
+
+## Phase 12 — Reports — Details
+
+### Completed Items
+
+- [x] **Backend: `ReportService`** (496 lines) — full PDF generation using Apache PDFBox 3.0.3:
+  - Gathers all module results (OCR, forensics, metadata, identity, face, AI manipulation) + risk assessment
+  - Builds structured PDF: header, document info, risk assessment (score, level, explanations, module contributions), module summaries, disclaimer, footer
+  - PDType1Font (Helvetica family), word-wrap support for long text
+  - Reports stored at `{uploadDir}/reports/report_{documentId}_{timestamp}.pdf`
+- [x] **Backend: `Report` entity** — JPA entity mapped to `reports` table (UUID id, document, task, storagePath, format, fileSize, generatedAt)
+- [x] **Backend: `ReportRepository`** — `findTopByDocumentIdOrderByGeneratedAtDesc()`
+- [x] **Backend: `ReportResponse` DTO** — reportId, documentId, format, fileSize, generatedAt, downloadUrl
+- [x] **Backend: Flyway V17** — `reports` table with document_id FK (ON DELETE CASCADE), task_id FK, indexes
+- [x] **Backend: Controller endpoints**:
+  - `GET /api/documents/{id}/analysis/report` → report metadata
+  - `GET /api/documents/{id}/analysis/report/download` → PDF binary with Content-Disposition attachment
+- [x] **Backend: Auto-generation** — `ReportService.generateReport()` called after evidence fusion completes in async pipeline
+- [x] **Backend: PDFBox 3.0.3 dependency** in `pom.xml` (Apache 2.0 license)
+- [x] **Frontend: `ReportResponse` TypeScript interface** added to `types.ts`
+- [x] **Frontend: `api.download()` method** — blob-based fetch + browser download trigger for binary responses (PDF)
+- [x] **Frontend: Results page wired up**:
+  - Fetches report metadata via `GET /api/documents/{id}/analysis/report`
+  - Report info card shows generation date, file size, format
+  - "Download Report" button: enabled when report exists, triggers PDF download
+  - Loading state with "⏳ Downloading…" indicator
+  - Graceful disabled state when report not yet generated
+- [x] **Frontend: Report card CSS** — reportCard, reportInfo, reportIcon, reportTitle, reportMeta styles
+- [x] **Frontend build succeeds** — 310 KB JS (95 KB gzip), 22 KB CSS
+- [x] **Documentation**: `api-contract.md` (Reports section updated to ✅ Implemented), `decisions.md` (DEC-011), `implementation-status.md`
 
 ---
 

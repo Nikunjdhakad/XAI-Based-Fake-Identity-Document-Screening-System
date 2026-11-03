@@ -9,6 +9,7 @@ import com.verilens.dto.ForensicResultResponse;
 import com.verilens.dto.IdentityConsistencyResponse;
 import com.verilens.dto.MetadataResultResponse;
 import com.verilens.dto.OcrResultResponse;
+import com.verilens.dto.ReportResponse;
 import com.verilens.dto.RiskAssessmentResponse;
 import com.verilens.entity.*;
 import com.verilens.repository.*;
@@ -57,6 +58,7 @@ public class AnalysisService {
     private final StorageService storageService;
     private final ObjectMapper objectMapper;
     private final EvidenceFusionService evidenceFusionService;
+    private final ReportService reportService;
 
     public AnalysisService(
             AnalysisTaskRepository analysisTaskRepository,
@@ -71,7 +73,8 @@ public class AnalysisService {
             AiServiceClient aiServiceClient,
             StorageService storageService,
             ObjectMapper objectMapper,
-            EvidenceFusionService evidenceFusionService) {
+            EvidenceFusionService evidenceFusionService,
+            ReportService reportService) {
         this.analysisTaskRepository = analysisTaskRepository;
         this.documentRepository = documentRepository;
         this.documentFileRepository = documentFileRepository;
@@ -85,6 +88,7 @@ public class AnalysisService {
         this.storageService = storageService;
         this.objectMapper = objectMapper;
         this.evidenceFusionService = evidenceFusionService;
+        this.reportService = reportService;
     }
 
     // -------------------------------------------------------------------------
@@ -227,6 +231,22 @@ public class AnalysisService {
     }
 
     /**
+     * Get report metadata for a document.
+     */
+    @Transactional(readOnly = true)
+    public ReportResponse getReport(UUID documentId, UUID userId) {
+        return reportService.getReport(documentId, userId);
+    }
+
+    /**
+     * Download the PDF report for a document.
+     */
+    @Transactional(readOnly = true)
+    public byte[] downloadReport(UUID documentId, UUID userId) {
+        return reportService.downloadReport(documentId, userId);
+    }
+
+    /**
      * Get the AI manipulation screening result for the latest analysis of a document.
      */
     @Transactional(readOnly = true)
@@ -330,6 +350,9 @@ public class AnalysisService {
 
             // Phase 10: run evidence fusion after all module results are persisted
             evidenceFusionService.fuse(task, document);
+
+            // Phase 12: generate PDF report after fusion
+            reportService.generateReport(task.getId(), document.getId());
 
             // Derive final status
             String aiStatus = (String) aiResponse.getOrDefault("status", "FAILED");

@@ -160,3 +160,15 @@ export interface SuspiciousRegion {
   confidence: number;
   description: string;
 }
+
+
+// ── Phase 12: Report ──────────────────────────────────────────────────────
+
+export interface ReportResponse {
+  reportId: string;
+  documentId: string;
+  format: string;
+  fileSize: number | null;
+  generatedAt: string;
+  downloadUrl: string;
+}
