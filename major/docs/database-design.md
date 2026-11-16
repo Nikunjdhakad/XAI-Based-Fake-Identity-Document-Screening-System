@@ -1,8 +1,8 @@
 # VeriLens — Database Design
 
-**Version:** 0.1.0  
-**Phase:** 2 — Backend Foundation  
-**Last updated:** 2026-10-20
+**Version:** 1.0.0  
+**Phase:** 15 — Final Documentation  
+**Last updated:** 2026-11-16
 
 ---
 
@@ -316,9 +316,30 @@ Match status values: `MATCH`, `MISMATCH`, `NOT_APPLICABLE`
 
 ## 6. Implementation Notes
 
-- **Tables 1–7 (roles, users, documents, document_files, analysis_tasks, audit_logs) are now implemented** via Flyway migrations V1–V7 (see `backend/src/main/resources/db/migration/`). The entities are mapped via JPA with `ddl-auto: validate` in production.
+- **All tables are implemented** via Flyway migrations V1–V17 (see `backend/src/main/resources/db/migration/`). Entities are mapped via JPA with `ddl-auto: validate` in production.
 - Tests use H2 in-memory with `MODE=PostgreSQL` and Hibernate `ddl-auto: create-drop` (Flyway disabled). See [decisions.md](decisions.md) DEC-009 for rationale.
-- JSONB columns are used for semi-structured module output that varies per module
-- All result tables link back to `AnalysisJob` for traceability
-- The schema will be refined as each module is implemented (Phases 4–9)
-- Remaining tables (OcrResult, ForensicResult, MetadataResult, IdentityConsistencyResult, FaceVerificationResult, AiManipulationResult, Evidence, SuspiciousRegion, RiskAssessment, Report) will be created in later phases
+- JSONB columns are used for semi-structured module output that varies per module.
+- All result tables link back to `AnalysisJob` for traceability.
+- The `reports` table uses `ON DELETE CASCADE` from `documents` — deleting a document removes all associated reports, results, and tasks.
+
+### Flyway Migration Summary
+
+| Migration | Table(s) | Phase |
+|-----------|----------|-------|
+| V1 | roles | 2 |
+| V2 | users | 2 |
+| V3 | documents | 2 |
+| V4 | document_files | 2 |
+| V5 | analysis_tasks | 2 |
+| V6 | audit_logs | 2 |
+| V7 | Seed default roles | 2 |
+| V8 | ocr_results | 4 |
+| V9 | metadata_results | 5 |
+| V10 | identity_consistency_results | 6 |
+| V11 | forensic_results | 7 |
+| V12 | face_verification_results | 8 |
+| V13 | ai_manipulation_results | 9 |
+| V14 | (reserved) | — |
+| V15 | risk_assessments | 10 |
+| V16 | documents.risk_level column | 10 |
+| V17 | reports | 12 |

@@ -53,6 +53,7 @@ public class StorageService {
 
     /**
      * Validate a file before storing.
+     * Checks: non-empty, extension whitelist, MIME type whitelist, and magic bytes.
      *
      * @throws IllegalArgumentException if file fails validation
      */
@@ -78,6 +79,18 @@ public class StorageService {
         if (contentType == null || !allowedMimeTypes.contains(contentType.toLowerCase())) {
             throw new IllegalArgumentException(
                     "MIME type '" + contentType + "' is not allowed. Allowed: " + allowedMimeTypes);
+        }
+
+        // Validate file content via magic bytes (Phase 14 hardening)
+        try {
+            byte[] header = new byte[Math.min(8, (int) file.getSize())];
+            file.getInputStream().read(header);
+            if (!verifyMagicBytes(header, extension)) {
+                throw new IllegalArgumentException(
+                        "File content does not match its extension. Possible spoofed file type.");
+            }
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Could not read file header for validation");
         }
     }
 
@@ -148,5 +161,27 @@ public class StorageService {
             throw new SecurityException("Path traversal attempt detected");
         }
         return filePath;
+    }
+
+    /**
+     * Verify file content matches expected type via magic bytes.
+     * Phase 14 hardening — prevents uploading executables disguised as images/PDFs.
+     */
+    private boolean verifyMagicBytes(byte[] header, String extension) {
+        if (header.length < 2) return false;
+
+        return switch (extension) {
+            case "pdf" ->
+                    header.length >= 4
+                    && header[0] == 0x25 && header[1] == 0x50
+                    && header[2] == 0x44 && header[3] == 0x46; // %PDF
+            case "jpg", "jpeg" ->
+                    (header[0] & 0xFF) == 0xFF && (header[1] & 0xFF) == 0xD8; // JPEG SOI
+            case "png" ->
+                    header.length >= 4
+                    && (header[0] & 0xFF) == 0x89 && header[1] == 0x50
+                    && header[2] == 0x4E && header[3] == 0x47; // PNG magic
+            default -> true; // Unknown extension — allow (whitelist already filtered)
+        };
     }
 }

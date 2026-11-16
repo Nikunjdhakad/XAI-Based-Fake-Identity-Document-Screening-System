@@ -262,4 +262,64 @@ This document records architectural and technical decisions made during developm
 
 ---
 
+### DEC-012: Synthetic Test Suite for Baseline Evaluation
+
+**Date:** 2026-11-04  
+**Phase:** 13  
+**Status:** ACCEPTED
+
+**Context:** Phase 13 requires evaluation of classification accuracy, localization quality, and robustness across degradation conditions. No real manipulated-document dataset with ground-truth labels was available.
+
+**Decision:** Generate a synthetic test suite using Pillow/NumPy programmatic manipulations:
+- 6 genuine certificate images (plain, with borders, gradient backgrounds, text-heavy, photo area, watermarked)
+- 8 manipulated images covering text_edit, copy_paste, inpainting, generation, and resave categories
+- 16 robustness-degraded variants (JPEG Q30/Q50, Gaussian blur r=2.0, resize 50%)
+- 30 total test cases with exact ground-truth labels and bounding boxes
+- Evaluate forensics and AI manipulation modules using Accuracy, Precision, Recall, F1, ROC-AUC, and IoU
+
+**Rationale:** Synthetic data enables reproducible, fully automated evaluation without licensing external forensic datasets. Ground-truth labels and manipulation bounding boxes are exact (no annotation noise). The framework can be re-run with real data when available.
+
+**Alternatives considered:**
+- Real manipulated datasets (CASIA, Columbia, COVERAGE) — not used due to licensing restrictions and multi-GB download requirements.
+- Manual human evaluation — not reproducible or scalable.
+- Crowdsourced annotation — out of scope for an academic project.
+
+**Consequences:**
+- Forensics module (ELA/noise/edge) scores 0.0 F1 on synthetic data because programmatic PIL edits do not create the JPEG double-compression artifacts that ELA detects. This is a known limitation of the test methodology, not a module defect.
+- AI manipulation module shows high false-positive rate on synthetic genuine images with large uniform certificate areas (spectral/gradient techniques trigger on uniform regions).
+- Results are **indicative baselines**, not production accuracy claims.
+- Framework is reusable: swap synthetic generator for real images to get production-grade metrics.
+
+---
+
+### DEC-013: Phase 14 Hardening Strategy
+
+**Date:** 2026-11-16  
+**Phase:** 14  
+**Status:** ACCEPTED
+
+**Context:** Phase 14 requires security hardening, input validation, error handling, performance optimization, and UX polish across all three services.
+
+**Decision:** Implement the following hardening measures without introducing new dependencies or changing the existing architecture:
+1. **Security headers** via servlet filter (CSP, HSTS, X-Frame-Options, X-Content-Type-Options, etc.)
+2. **In-memory rate limiting** via servlet filter (per-IP, separate limits for auth and general endpoints)
+3. **Magic bytes validation** in `StorageService` to prevent MIME type spoofing
+4. **Expanded `GlobalExceptionHandler`** covering 10+ exception types with safe error messages (no stack trace leaks)
+5. **Input sanitization** utility for pagination bounds, sort field whitelisting, and log injection prevention
+6. **Response GZIP compression** for JSON/PDF responses > 1 KB
+7. **RestTemplate timeouts** (10s connect, 120s read) on AI service client
+8. **Python global exception handler** and request size guard
+9. **React ErrorBoundary** and 404 page for frontend crash resilience
+10. **Accessibility**: skip-to-content link, ARIA landmarks, focus-visible outlines, reduced-motion media query
+
+**Rationale:** All hardening measures use Spring Boot / servlet built-ins and standard web security practices. No external rate-limiting infrastructure (Redis) is needed for a single-instance academic deployment. Magic bytes validation adds defence-in-depth beyond MIME type checking.
+
+**Alternatives considered:**
+- Spring Security rate limiting with Bucket4j — adds dependency complexity for a single-node deployment.
+- Helmet.js for frontend headers — Spring Boot serves APIs only, not the React SPA; security headers are applied at API level.
+
+**Consequences:** Rate limiting is in-memory (resets on restart, not distributed). For production, a Redis-backed or API gateway rate limiter would be needed. CSP policy is strict — if the frontend embeds external resources in the future, CSP must be updated.
+
+---
+
 *New decisions will be appended as they arise.*

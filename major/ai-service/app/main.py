@@ -30,9 +30,11 @@ app = FastAPI(
     redoc_url=None,
 )
 
+# Max file size: 25 MB (slightly above Spring Boot's 20 MB to account for multipart overhead)
+MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024
 
 # ---------------------------------------------------------------------------
-# Middleware — API key verification
+# Middleware — API key verification + request size guard
 # ---------------------------------------------------------------------------
 @app.middleware("http")
 async def verify_api_key(request: Request, call_next):
@@ -46,8 +48,31 @@ async def verify_api_key(request: Request, call_next):
                 status_code=401,
                 content={"detail": "Invalid or missing API key"},
             )
+        # Check content-length header for oversized requests
+        content_length = request.headers.get("content-length")
+        if content_length and int(content_length) > MAX_FILE_SIZE_BYTES:
+            return JSONResponse(
+                status_code=413,
+                content={"detail": "Request body too large"},
+            )
     response = await call_next(request)
     return response
+
+
+# ---------------------------------------------------------------------------
+# Global exception handler — prevent stack trace leaks
+# ---------------------------------------------------------------------------
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    import traceback
+    traceback.print_exc()  # Log full trace to container logs
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Internal analysis error",
+            "status": "FAILED",
+        },
+    )
 
 
 # ---------------------------------------------------------------------------

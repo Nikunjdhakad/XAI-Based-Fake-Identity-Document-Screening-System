@@ -1,8 +1,8 @@
 # VeriLens — Architecture Specification
 
-**Version:** 0.1.0  
-**Phase:** 2 — Backend Foundation  
-**Last updated:** 2026-10-20
+**Version:** 1.0.0  
+**Phase:** 15 — Final Documentation  
+**Last updated:** 2026-11-16
 
 ---
 
@@ -150,8 +150,11 @@ Each module produces **evidence**, not verdicts. The fusion layer combines evide
 | Authorization            | Role-based (ADMIN, ANALYST, USER)  |
 | Frontend ↔ Backend       | JWT in Authorization header        |
 | Backend ↔ AI Service     | Internal API key                   |
-| File uploads             | Size limit, MIME validation, safe naming |
+| File uploads             | Extension + MIME + magic bytes + size limit |
 | AI Service exposure      | Not accessible from frontend       |
+| Rate limiting            | Per-IP in-memory (60/min, 10/min auth) |
+| Security headers         | CSP, HSTS, X-Frame-Options, etc.   |
+| Error handling           | Global handler, no stack trace leaks|
 | Audit                    | All significant actions logged     |
 | CORS                     | Configured for frontend origin only|
 
@@ -202,6 +205,6 @@ See [decisions.md](decisions.md) for the full decision log.
 | Scalability    | Single-instance sufficient for academic demonstration   |
 | Availability   | Local development; no HA requirement                    |
 | Performance    | Analysis within 30–60 seconds per document (target)     |
-| Security       | JWT, input validation, safe file handling, audit trail  |
+| Security       | JWT, input validation, safe file handling, audit trail, rate limiting, security headers, magic bytes validation |
 | Observability  | Structured logging per service; audit log in database   |
 | Testability    | Unit + integration tests per service; ML evaluation     |

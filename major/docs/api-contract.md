@@ -1,8 +1,8 @@
 # VeriLens — API Contract
 
 **Version:** 0.1.0  
-**Phase:** 12 — Reports  
-**Last updated:** 2026-11-03
+**Phase:** 14 — Hardening  
+**Last updated:** 2026-11-16
 
 ---
 
@@ -14,6 +14,22 @@ This document defines the API contracts between the three communicating services
 2. **Spring Boot → Python** (Internal API)
 
 All endpoints use JSON request/response bodies unless otherwise noted.
+
+### Rate Limiting (Phase 14)
+
+All API endpoints are rate-limited per client IP:
+- **General endpoints:** 60 requests/minute
+- **Auth endpoints** (`/api/auth/login`, `/api/auth/register`): 10 requests/minute
+
+Rate limit headers are included in all responses:
+- `X-RateLimit-Limit` — max requests per minute
+- `X-RateLimit-Remaining` — requests remaining in current window
+
+When exceeded, the API returns `429 Too Many Requests` with a JSON error body.
+
+### Security Headers (Phase 14)
+
+All responses include security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection: 1; mode=block`, `Referrer-Policy: strict-origin-when-cross-origin`, `Content-Security-Policy`, `Permissions-Policy`, `Strict-Transport-Security`. API responses also include `Cache-Control: no-store`.
 
 ---
 

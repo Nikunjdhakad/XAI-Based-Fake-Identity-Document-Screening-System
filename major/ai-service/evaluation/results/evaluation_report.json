@@ -1,0 +1,1313 @@
+{
+  "framework": "VeriLens Phase 13 Evaluation",
+  "version": "1.0.0",
+  "timestamp": "2026-11-04T07:00:40",
+  "test_suite": {
+    "base_cases": 14,
+    "genuine": 6,
+    "manipulated": 8,
+    "robustness_cases": 16,
+    "total": 30,
+    "categories": [
+      "copy_paste",
+      "text_edit",
+      "resave",
+      "inpainting",
+      "genuine",
+      "generation"
+    ]
+  },
+  "thresholds": {
+    "forensics": 0.15,
+    "ai_manipulation": 0.2,
+    "combined": 0.15
+  },
+  "base_metrics": {
+    "forensics": {
+      "n": 14,
+      "tp": 0,
+      "fp": 0,
+      "fn": 8,
+      "tn": 6,
+      "accuracy": 0.4286,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.0
+    },
+    "ai_manipulation": {
+      "n": 14,
+      "tp": 8,
+      "fp": 6,
+      "fn": 0,
+      "tn": 0,
+      "accuracy": 0.5714,
+      "precision": 0.5714,
+      "recall": 1.0,
+      "f1": 0.7273,
+      "roc_auc": 0.5208
+    },
+    "combined": {
+      "n": 14,
+      "tp": 8,
+      "fp": 5,
+      "fn": 0,
+      "tn": 1,
+      "accuracy": 0.6429,
+      "precision": 0.6154,
+      "recall": 1.0,
+      "f1": 0.7619,
+      "roc_auc": 0.5208
+    }
+  },
+  "robustness_metrics": {
+    "forensics": {
+      "n": 16,
+      "tp": 0,
+      "fp": 0,
+      "fn": 16,
+      "tn": 0,
+      "accuracy": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.5
+    },
+    "ai_manipulation": {
+      "n": 16,
+      "tp": 16,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 0.5
+    },
+    "combined": {
+      "n": 16,
+      "tp": 16,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 0.5
+    }
+  },
+  "localization": {
+    "overlapping_regions": 7,
+    "average_iou": 0.1676,
+    "details": [
+      {
+        "case": "text_edit_date",
+        "source": "ai_manipulation",
+        "iou": 0.2134
+      },
+      {
+        "case": "copy_paste_stamp",
+        "source": "ai_manipulation",
+        "iou": 0.2219
+      },
+      {
+        "case": "copy_paste_stamp",
+        "source": "ai_manipulation",
+        "iou": 0.3744
+      },
+      {
+        "case": "copy_paste_stamp",
+        "source": "ai_manipulation",
+        "iou": 0.1033
+      },
+      {
+        "case": "resave_triple",
+        "source": "ai_manipulation",
+        "iou": 0.0677
+      },
+      {
+        "case": "resave_triple",
+        "source": "ai_manipulation",
+        "iou": 0.0677
+      },
+      {
+        "case": "resave_triple",
+        "source": "ai_manipulation",
+        "iou": 0.1248
+      }
+    ]
+  },
+  "per_case_results": {
+    "forensics": [
+      {
+        "test_name": "genuine_clean",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 16,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "genuine_noisy",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 49,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "genuine_compressed",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 15,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "genuine_resized",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 4,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "genuine_blurred",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 18,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "genuine_png",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 22,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "text_edit_name",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 14,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "text_edit_date",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 15,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "copy_paste_quality_mismatch",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 10,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "copy_paste_stamp",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 9,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "inpainting_smooth",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 12,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "inpainting_gradient",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 13,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "ai_generated_texture",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 9,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "resave_triple",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 9,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      }
+    ],
+    "ai_manipulation": [
+      {
+        "test_name": "genuine_clean",
+        "module": "ai_manipulation",
+        "risk_score": 0.5077,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 172,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "genuine_noisy",
+        "module": "ai_manipulation",
+        "risk_score": 0.2615,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 161,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "genuine_compressed",
+        "module": "ai_manipulation",
+        "risk_score": 0.5077,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 159,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "genuine_resized",
+        "module": "ai_manipulation",
+        "risk_score": 0.4569,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 48,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "genuine_blurred",
+        "module": "ai_manipulation",
+        "risk_score": 0.8538,
+        "predicted_manipulated": true,
+        "regions_detected": 14,
+        "processing_time_ms": 147,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "SPLICING",
+          "confidence": 0.9
+        }
+      },
+      {
+        "test_name": "genuine_png",
+        "module": "ai_manipulation",
+        "risk_score": 0.5077,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 150,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "text_edit_name",
+        "module": "ai_manipulation",
+        "risk_score": 0.5077,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 159,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "text_edit_date",
+        "module": "ai_manipulation",
+        "risk_score": 0.7654,
+        "predicted_manipulated": true,
+        "regions_detected": 14,
+        "processing_time_ms": 236,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "SPLICING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "copy_paste_quality_mismatch",
+        "module": "ai_manipulation",
+        "risk_score": 0.5077,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 136,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "copy_paste_stamp",
+        "module": "ai_manipulation",
+        "risk_score": 0.7615,
+        "predicted_manipulated": true,
+        "regions_detected": 15,
+        "processing_time_ms": 122,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "SPLICING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "inpainting_smooth",
+        "module": "ai_manipulation",
+        "risk_score": 0.5077,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 139,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "inpainting_gradient",
+        "module": "ai_manipulation",
+        "risk_score": 0.5077,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 146,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "ai_generated_texture",
+        "module": "ai_manipulation",
+        "risk_score": 0.4708,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 146,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "resave_triple",
+        "module": "ai_manipulation",
+        "risk_score": 0.75,
+        "predicted_manipulated": true,
+        "regions_detected": 15,
+        "processing_time_ms": 147,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "SPLICING",
+          "confidence": 0.85
+        }
+      }
+    ],
+    "combined": [
+      {
+        "test_name": "genuine_clean",
+        "module": "combined",
+        "risk_score": 0.25385,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 153,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.5077
+        }
+      },
+      {
+        "test_name": "genuine_noisy",
+        "module": "combined",
+        "risk_score": 0.13075,
+        "predicted_manipulated": false,
+        "regions_detected": 10,
+        "processing_time_ms": 212,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.2615
+        }
+      },
+      {
+        "test_name": "genuine_compressed",
+        "module": "combined",
+        "risk_score": 0.25385,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 180,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.5077
+        }
+      },
+      {
+        "test_name": "genuine_resized",
+        "module": "combined",
+        "risk_score": 0.22845,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 42,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.4569
+        }
+      },
+      {
+        "test_name": "genuine_blurred",
+        "module": "combined",
+        "risk_score": 0.4269,
+        "predicted_manipulated": true,
+        "regions_detected": 14,
+        "processing_time_ms": 160,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.8538
+        }
+      },
+      {
+        "test_name": "genuine_png",
+        "module": "combined",
+        "risk_score": 0.25385,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 184,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.5077
+        }
+      },
+      {
+        "test_name": "text_edit_name",
+        "module": "combined",
+        "risk_score": 0.25385,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 152,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.5077
+        }
+      },
+      {
+        "test_name": "text_edit_date",
+        "module": "combined",
+        "risk_score": 0.3827,
+        "predicted_manipulated": true,
+        "regions_detected": 14,
+        "processing_time_ms": 136,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.7654
+        }
+      },
+      {
+        "test_name": "copy_paste_quality_mismatch",
+        "module": "combined",
+        "risk_score": 0.25385,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 134,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.5077
+        }
+      },
+      {
+        "test_name": "copy_paste_stamp",
+        "module": "combined",
+        "risk_score": 0.38075,
+        "predicted_manipulated": true,
+        "regions_detected": 15,
+        "processing_time_ms": 140,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.7615
+        }
+      },
+      {
+        "test_name": "inpainting_smooth",
+        "module": "combined",
+        "risk_score": 0.25385,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 196,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.5077
+        }
+      },
+      {
+        "test_name": "inpainting_gradient",
+        "module": "combined",
+        "risk_score": 0.25385,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 148,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.5077
+        }
+      },
+      {
+        "test_name": "ai_generated_texture",
+        "module": "combined",
+        "risk_score": 0.2354,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 159,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.4708
+        }
+      },
+      {
+        "test_name": "resave_triple",
+        "module": "combined",
+        "risk_score": 0.375,
+        "predicted_manipulated": true,
+        "regions_detected": 15,
+        "processing_time_ms": 158,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.75
+        }
+      }
+    ]
+  },
+  "robustness_results": {
+    "forensics": [
+      {
+        "test_name": "text_edit_name_jpeg_q30",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 13,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "text_edit_name_jpeg_q50",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 14,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "text_edit_name_blur_r2.0",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 12,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "text_edit_name_resize_50pct",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 3,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "text_edit_date_jpeg_q30",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 13,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "text_edit_date_jpeg_q50",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 16,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "text_edit_date_blur_r2.0",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 14,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "text_edit_date_resize_50pct",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 2,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "copy_paste_quality_mismatch_jpeg_q30",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 9,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "copy_paste_quality_mismatch_jpeg_q50",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 10,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "copy_paste_quality_mismatch_blur_r2.0",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 12,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "copy_paste_quality_mismatch_resize_50pct",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 3,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "copy_paste_stamp_jpeg_q30",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 12,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "copy_paste_stamp_jpeg_q50",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 11,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "copy_paste_stamp_blur_r2.0",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 14,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      },
+      {
+        "test_name": "copy_paste_stamp_resize_50pct",
+        "module": "forensics",
+        "risk_score": 0.0,
+        "predicted_manipulated": false,
+        "regions_detected": 0,
+        "processing_time_ms": 2,
+        "status": "FAILED",
+        "details": {
+          "findings_count": 0
+        }
+      }
+    ],
+    "ai_manipulation": [
+      {
+        "test_name": "text_edit_name_jpeg_q30",
+        "module": "ai_manipulation",
+        "risk_score": 0.5077,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 144,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "text_edit_name_jpeg_q50",
+        "module": "ai_manipulation",
+        "risk_score": 0.5077,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 156,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "text_edit_name_blur_r2.0",
+        "module": "ai_manipulation",
+        "risk_score": 0.8508,
+        "predicted_manipulated": true,
+        "regions_detected": 15,
+        "processing_time_ms": 149,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "SPLICING",
+          "confidence": 0.9
+        }
+      },
+      {
+        "test_name": "text_edit_name_resize_50pct",
+        "module": "ai_manipulation",
+        "risk_score": 0.4554,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 32,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "text_edit_date_jpeg_q30",
+        "module": "ai_manipulation",
+        "risk_score": 0.5077,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 181,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "text_edit_date_jpeg_q50",
+        "module": "ai_manipulation",
+        "risk_score": 0.7462,
+        "predicted_manipulated": true,
+        "regions_detected": 15,
+        "processing_time_ms": 161,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "SPLICING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "text_edit_date_blur_r2.0",
+        "module": "ai_manipulation",
+        "risk_score": 0.8477,
+        "predicted_manipulated": true,
+        "regions_detected": 13,
+        "processing_time_ms": 142,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "SPLICING",
+          "confidence": 0.9
+        }
+      },
+      {
+        "test_name": "text_edit_date_resize_50pct",
+        "module": "ai_manipulation",
+        "risk_score": 0.46,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 29,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "copy_paste_quality_mismatch_jpeg_q30",
+        "module": "ai_manipulation",
+        "risk_score": 0.5077,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 126,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "copy_paste_quality_mismatch_jpeg_q50",
+        "module": "ai_manipulation",
+        "risk_score": 0.7462,
+        "predicted_manipulated": true,
+        "regions_detected": 15,
+        "processing_time_ms": 137,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "SPLICING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "copy_paste_quality_mismatch_blur_r2.0",
+        "module": "ai_manipulation",
+        "risk_score": 0.7369,
+        "predicted_manipulated": true,
+        "regions_detected": 15,
+        "processing_time_ms": 149,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "SPLICING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "copy_paste_quality_mismatch_resize_50pct",
+        "module": "ai_manipulation",
+        "risk_score": 0.4523,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 32,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "copy_paste_stamp_jpeg_q30",
+        "module": "ai_manipulation",
+        "risk_score": 0.5077,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 139,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "copy_paste_stamp_jpeg_q50",
+        "module": "ai_manipulation",
+        "risk_score": 0.5077,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 149,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      },
+      {
+        "test_name": "copy_paste_stamp_blur_r2.0",
+        "module": "ai_manipulation",
+        "risk_score": 0.8385,
+        "predicted_manipulated": true,
+        "regions_detected": 15,
+        "processing_time_ms": 146,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "SPLICING",
+          "confidence": 0.9
+        }
+      },
+      {
+        "test_name": "copy_paste_stamp_resize_50pct",
+        "module": "ai_manipulation",
+        "risk_score": 0.4308,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 32,
+        "status": "SUCCESS",
+        "details": {
+          "manipulation_type": "INPAINTING",
+          "confidence": 0.85
+        }
+      }
+    ],
+    "combined": [
+      {
+        "test_name": "text_edit_name_jpeg_q30",
+        "module": "combined",
+        "risk_score": 0.25385,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 156,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.5077
+        }
+      },
+      {
+        "test_name": "text_edit_name_jpeg_q50",
+        "module": "combined",
+        "risk_score": 0.25385,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 146,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.5077
+        }
+      },
+      {
+        "test_name": "text_edit_name_blur_r2.0",
+        "module": "combined",
+        "risk_score": 0.4254,
+        "predicted_manipulated": true,
+        "regions_detected": 15,
+        "processing_time_ms": 163,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.8508
+        }
+      },
+      {
+        "test_name": "text_edit_name_resize_50pct",
+        "module": "combined",
+        "risk_score": 0.2277,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 34,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.4554
+        }
+      },
+      {
+        "test_name": "text_edit_date_jpeg_q30",
+        "module": "combined",
+        "risk_score": 0.25385,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 185,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.5077
+        }
+      },
+      {
+        "test_name": "text_edit_date_jpeg_q50",
+        "module": "combined",
+        "risk_score": 0.3731,
+        "predicted_manipulated": true,
+        "regions_detected": 15,
+        "processing_time_ms": 172,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.7462
+        }
+      },
+      {
+        "test_name": "text_edit_date_blur_r2.0",
+        "module": "combined",
+        "risk_score": 0.42385,
+        "predicted_manipulated": true,
+        "regions_detected": 13,
+        "processing_time_ms": 168,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.8477
+        }
+      },
+      {
+        "test_name": "text_edit_date_resize_50pct",
+        "module": "combined",
+        "risk_score": 0.23,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 31,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.46
+        }
+      },
+      {
+        "test_name": "copy_paste_quality_mismatch_jpeg_q30",
+        "module": "combined",
+        "risk_score": 0.25385,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 188,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.5077
+        }
+      },
+      {
+        "test_name": "copy_paste_quality_mismatch_jpeg_q50",
+        "module": "combined",
+        "risk_score": 0.3731,
+        "predicted_manipulated": true,
+        "regions_detected": 15,
+        "processing_time_ms": 157,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.7462
+        }
+      },
+      {
+        "test_name": "copy_paste_quality_mismatch_blur_r2.0",
+        "module": "combined",
+        "risk_score": 0.36845,
+        "predicted_manipulated": true,
+        "regions_detected": 15,
+        "processing_time_ms": 164,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.7369
+        }
+      },
+      {
+        "test_name": "copy_paste_quality_mismatch_resize_50pct",
+        "module": "combined",
+        "risk_score": 0.22615,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 30,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.4523
+        }
+      },
+      {
+        "test_name": "copy_paste_stamp_jpeg_q30",
+        "module": "combined",
+        "risk_score": 0.25385,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 173,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.5077
+        }
+      },
+      {
+        "test_name": "copy_paste_stamp_jpeg_q50",
+        "module": "combined",
+        "risk_score": 0.25385,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 180,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.5077
+        }
+      },
+      {
+        "test_name": "copy_paste_stamp_blur_r2.0",
+        "module": "combined",
+        "risk_score": 0.41925,
+        "predicted_manipulated": true,
+        "regions_detected": 15,
+        "processing_time_ms": 144,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.8385
+        }
+      },
+      {
+        "test_name": "copy_paste_stamp_resize_50pct",
+        "module": "combined",
+        "risk_score": 0.2154,
+        "predicted_manipulated": true,
+        "regions_detected": 10,
+        "processing_time_ms": 37,
+        "status": "PARTIAL",
+        "details": {
+          "forensics_score": 0.0,
+          "ai_score": 0.4308
+        }
+      }
+    ]
+  },
+  "limitations": [
+    "Evaluation uses synthetic test images, not real manipulated documents",
+    "Test suite is small (14 base + 16 robustness) — results are indicative, not definitive",
+    "Genuine/manipulated distribution may not match real-world prevalence",
+    "IoU evaluation is limited by synthetic ground-truth bounding boxes",
+    "Deep learning models (ArcFace, manipulation classifiers) not yet integrated",
+    "OCR, metadata, identity, and face modules are not evaluated for classification accuracy here (they contribute evidence, not binary predictions)"
+  ],
+  "recommendations": [
+    "Collect or license a real manipulated-document dataset for Phase 14+ validation",
+    "Tune thresholds based on precision/recall tradeoff requirements",
+    "Consider deep learning baselines (ManTraNet, CAT-Net) for comparison in future work",
+    "Evaluate fusion weights with larger, more diverse test sets",
+    "Add cross-format evaluation (PDF vs scanned image vs mobile photo)"
+  ]
+}

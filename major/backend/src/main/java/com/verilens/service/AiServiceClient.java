@@ -3,6 +3,7 @@ package com.verilens.service;
 import com.verilens.config.AiServiceConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -10,12 +11,14 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Duration;
 import java.util.Map;
 
 /**
  * HTTP client for the internal Python AI service.
  * Called by AnalysisService to dispatch document analysis work.
  * The frontend never calls this — it is internal only.
+ * Phase 14: Connection/read timeouts configured from AiServiceConfig.
  */
 @Service
 public class AiServiceClient {
@@ -25,9 +28,12 @@ public class AiServiceClient {
     private final AiServiceConfig config;
     private final RestTemplate restTemplate;
 
-    public AiServiceClient(AiServiceConfig config) {
+    public AiServiceClient(AiServiceConfig config, RestTemplateBuilder builder) {
         this.config = config;
-        this.restTemplate = new RestTemplate();
+        this.restTemplate = builder
+                .connectTimeout(Duration.ofSeconds(10))
+                .readTimeout(Duration.ofSeconds(config.getTimeoutSeconds()))
+                .build();
     }
 
     /**

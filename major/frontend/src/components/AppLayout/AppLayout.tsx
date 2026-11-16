@@ -19,7 +19,8 @@ export function AppLayout() {
 
   return (
     <div className={styles.shell}>
-      <aside className={styles.sidebar}>
+      <a href="#main-content" className="skip-link">Skip to content</a>
+      <aside className={styles.sidebar} role="complementary" aria-label="Sidebar">
         <div className={styles.brand}>
           <span className={styles.brandName}>VeriLens</span>
           <span className={styles.brandTag}>Document Screening</span>
@@ -48,7 +49,7 @@ export function AppLayout() {
           </button>
         </div>
       </aside>
-      <main className={styles.main}>
+      <main id="main-content" className={styles.main} role="main">
         <Outlet />
       </main>
     </div>

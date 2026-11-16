@@ -89,7 +89,7 @@ All services run in Docker containers orchestrated by Docker Compose.
 | Service | Library | Purpose |
 |---|---|---|
 | Backend | `jjwt` 0.12.6 | JWT generation and validation |
-| Backend | `flyway-core` | Database schema migrations (V1–V16) |
+| Backend | `flyway-core` | Database schema migrations (V1–V17) |
 | Backend | `spring-boot-starter-security` | Authentication, authorization, CORS |
 | AI Service | `pytesseract` | OCR text extraction |
 | AI Service | `opencv-python-headless` | Image forensics, face detection |
@@ -389,6 +389,7 @@ Full request/response schemas: see [docs/api-contract.md](docs/api-contract.md)
 | V13 | `ai_manipulation_results` | AI manipulation output |
 | V15 | `risk_assessments` | Evidence fusion risk assessment |
 | V16 | (alter) | Add `risk_level` column to documents |
+| V17 | `reports` | PDF screening report metadata |
 
 Full schema: see [docs/database-design.md](docs/database-design.md)
 
@@ -437,10 +438,10 @@ Full schema: see [docs/database-design.md](docs/database-design.md)
 | 9 | AI Manipulation Screening | ✅ Complete |
 | 10 | Evidence Fusion & Risk Scoring | ✅ Complete |
 | 11 | Suspicious Region Viewer | ✅ Complete |
-| 12 | Reports | ⬜ Not Started |
-| 13 | Evaluation | ⬜ Not Started |
-| 14 | Hardening | ⬜ Not Started |
-| 15 | Final Documentation | ⬜ Not Started |
+| 12 | Reports | ✅ Complete |
+| 13 | Evaluation | ✅ Complete |
+| 14 | Hardening | ✅ Complete |
+| 15 | Final Documentation | ✅ Complete |
 
 Detailed status: see [docs/implementation-status.md](docs/implementation-status.md)
 
@@ -453,11 +454,15 @@ Detailed status: see [docs/implementation-status.md](docs/implementation-status.
 | [architecture.md](docs/architecture.md) | Service boundaries, data flow, deployment topology |
 | [api-contract.md](docs/api-contract.md) | REST endpoint specifications with examples |
 | [database-design.md](docs/database-design.md) | Entity definitions, ER diagram, indexes |
-| [ai-modules.md](docs/ai-modules.md) | Module specs, input/output schemas, status |
+| [ai-modules.md](docs/ai-modules.md) | Module specs, input/output schemas, evaluation results |
 | [ui-ux-spec.md](docs/ui-ux-spec.md) | Design direction, screen layouts, accessibility |
 | [testing-strategy.md](docs/testing-strategy.md) | Test plan per service and phase |
-| [decisions.md](docs/decisions.md) | Architectural decision log (9 decisions) |
+| [decisions.md](docs/decisions.md) | Architectural decision log (13 decisions) |
 | [implementation-status.md](docs/implementation-status.md) | Phase tracking with details |
+| [srs.md](docs/srs.md) | Software Requirements Specification |
+| [experiment-results.md](docs/experiment-results.md) | ML evaluation, testing report, experiment results |
+| [limitations-and-future-scope.md](docs/limitations-and-future-scope.md) | Known limitations, future enhancements |
+| [viva-preparation.md](docs/viva-preparation.md) | Viva Q&A, architecture diagrams, talking points |
 
 ---
 

@@ -1,5 +1,6 @@
 package com.verilens.controller;
 
+import com.verilens.config.InputSanitizer;
 import com.verilens.dto.DocumentResponse;
 import com.verilens.dto.ErrorResponse;
 import com.verilens.entity.DocumentStatus;
@@ -83,7 +84,11 @@ public class DocumentController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         UUID userId = resolveUserId(userDetails);
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sort));
+        int safePage = InputSanitizer.clampPage(page);
+        int safeSize = InputSanitizer.clampSize(size);
+        String safeSort = InputSanitizer.validateSortField(sort, "createdAt",
+                "createdAt", "originalFilename", "status", "documentType");
+        Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, safeSort));
 
         DocumentStatus docStatus = null;
         if (status != null && !status.isBlank()) {

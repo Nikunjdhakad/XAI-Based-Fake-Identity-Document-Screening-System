@@ -38,6 +38,10 @@ spring:
 # ---- Server ----
 server:
   port: ${SERVER_PORT:8080}
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/plain,application/pdf
+    min-response-size: 1024
 
 # ---- JWT ----
 verilens:

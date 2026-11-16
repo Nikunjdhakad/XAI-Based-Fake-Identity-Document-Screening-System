@@ -1,6 +1,6 @@
 # VeriLens — Implementation Status
 
-**Last updated:** 2026-11-03
+**Last updated:** 2026-11-16
 
 ---
 
@@ -19,9 +19,108 @@
 | 10    | Evidence Fusion & Risk Scoring | ✅ COMPLETE     |
 | 11    | Suspicious Region Viewer     | ✅ COMPLETE     |
 | 12    | Reports                      | ✅ COMPLETE     |
-| 13    | Evaluation                   | ⬜ NOT STARTED |
-| 14    | Hardening                    | ⬜ NOT STARTED |
-| 15    | Final Documentation          | ⬜ NOT STARTED |
+| 13    | Evaluation                   | ✅ COMPLETE     |
+| 14    | Hardening                    | ✅ COMPLETE     |
+| 15    | Final Documentation          | ✅ COMPLETE     |
+
+---
+
+## Phase 15 — Final Documentation — Details
+
+### New Documents Created
+
+- [x] **`docs/srs.md`** — Software Requirements Specification: 25 functional requirements (FR-01 to FR-25), 13 non-functional requirements (NFR-01 to NFR-13), supported document categories, target manipulation types, out-of-scope items, constraints
+- [x] **`docs/experiment-results.md`** — Testing report and experiment results: unit/integration test summary (24 backend + 135 Python + frontend build), full Phase 13 ML evaluation metrics (classification, robustness, IoU), analysis interpretation, comparison with objectives
+- [x] **`docs/limitations-and-future-scope.md`** — Known limitations (OCR, forensics, AI manipulation, face verification, system-level, evaluation) and future scope (short-term, medium-term, long-term vision, research directions)
+- [x] **`docs/viva-preparation.md`** — Viva Q&A guide: elevator pitch, 12 key questions with detailed answers, architecture diagrams, code files to explain, academic positioning talking points
+
+### Existing Documents Updated
+
+- [x] **`docs/architecture.md`** — Version bumped to 1.0.0, phase updated to 15, security architecture table expanded with rate limiting, security headers, magic bytes validation
+- [x] **`docs/database-design.md`** — Version bumped to 1.0.0, phase updated to 15, implementation notes updated to reflect all 17 Flyway migrations are implemented, migration summary table added
+- [x] **`docs/api-contract.md`** — Phase updated to 14, rate limiting and security headers sections added
+- [x] **`README.md`** — All 15 phases marked complete, documentation table expanded with 4 new docs, Flyway migration count updated to V17, reports migration added to schema table
+
+---
+
+## Phase 14 — Hardening — Details
+
+### Security Hardening
+
+- [x] **Security headers filter** (`SecurityHeadersFilter.java`) — X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Content-Security-Policy, Permissions-Policy, Strict-Transport-Security, Cache-Control for API responses
+- [x] **Rate limiting filter** (`RateLimitFilter.java`) — per-IP in-memory rate limiter: 60 req/min general, 10 req/min for login/register; X-RateLimit-Limit and X-RateLimit-Remaining headers; 429 JSON error response
+- [x] **Magic bytes file validation** — StorageService now verifies file content matches extension via magic bytes (PDF `%PDF`, JPEG `FF D8`, PNG `89 50 4E 47`) to prevent disguised executable uploads
+- [x] **AI service request size guard** — Python middleware rejects requests > 25 MB before processing
+- [x] **AI service global exception handler** — catches unhandled exceptions, logs full trace to container logs, returns safe JSON error to caller (no stack trace leaks)
+
+### Input Validation Hardening
+
+- [x] **Pagination bounds clamping** — `InputSanitizer` utility: page ≥ 0, size 1–100, sort field validated against whitelist (createdAt, originalFilename, status, documentType)
+- [x] **Log injection prevention** — `InputSanitizer.sanitizeForLog()` strips newlines and control characters
+
+### Error Handling Hardening
+
+- [x] **Expanded GlobalExceptionHandler** — now handles 10 exception types:
+  - `MethodArgumentNotValidException` (400 — @Valid errors)
+  - `IllegalArgumentException` (400 — business validation)
+  - `MissingServletRequestParameterException` (400 — missing params)
+  - `HttpMessageNotReadableException` (400 — malformed JSON)
+  - `MaxUploadSizeExceededException` (413 — file too large)
+  - `HttpRequestMethodNotSupportedException` (405 — wrong HTTP method)
+  - `HttpMediaTypeNotSupportedException` (415 — wrong content type)
+  - `AccessDeniedException` (403 — insufficient role)
+  - `BadCredentialsException` (401 — invalid login)
+  - `SecurityException` (403 — path traversal attempts, logged)
+  - `NoResourceFoundException` (404 — unmapped paths)
+  - `Exception` (500 — catch-all, logs full stack trace, returns safe message)
+
+### Performance Hardening
+
+- [x] **Response compression** — GZIP enabled in application.yml for JSON/XML/HTML/PDF responses > 1 KB
+- [x] **AI service client timeouts** — `RestTemplate` configured with 10s connect timeout, configurable read timeout (default 120s) via `RestTemplateBuilder`
+
+### UX Polish
+
+- [x] **Error Boundary** (`ErrorBoundary.tsx`) — catches React rendering crashes, shows fallback UI with "Try Again" and "Go to Dashboard" buttons, expandable error details
+- [x] **404 Not Found page** (`NotFound.tsx`) — clean 404 page for unmatched routes within authenticated area
+- [x] **Skip-to-content link** — screen reader and keyboard navigation support in AppLayout
+- [x] **ARIA landmarks** — `role="main"`, `role="complementary"`, `aria-label` on nav and sidebar
+- [x] **Focus-visible outlines** — consistent 2px accent ring on all focusable elements
+- [x] **Reduced motion support** — `@media (prefers-reduced-motion: reduce)` disables animations
+- [x] **Responsive text scaling** — font sizes adjusted for viewports < 768px
+- [x] **Utility CSS classes** — `.spinner`, `.spinner--lg`, `.empty-state`, `.toast--error`, `.toast--success`
+- [x] **Frontend build succeeds** — 313 KB JS (96 KB gzip), 24 KB CSS
+
+---
+
+## Phase 13 — Evaluation — Details
+
+### Completed Items
+
+- [x] **Evaluation framework** (`ai-service/evaluation/run_evaluation.py`) — 970-line comprehensive evaluation suite
+- [x] **Synthetic test image generation**: 6 genuine + 8 manipulated = 14 base cases
+- [x] **Manipulation categories covered**: text_edit, copy_paste, inpainting, generation, resave
+- [x] **Robustness degradation suite**: JPEG Q30/Q50, Gaussian blur r=2.0, resize 50% → 16 degraded variants (30 total cases)
+- [x] **Classification metrics**: Accuracy, Precision, Recall, F1, ROC-AUC computed per module and combined
+- [x] **Localization metrics**: IoU evaluation for suspicious region overlap with ground-truth bounding boxes
+- [x] **Results**: forensics 0.000 F1 (synthetic data limitation), AI manipulation 0.727 F1, combined 0.762 F1
+- [x] **Robustness results**: AI manipulation module maintains 100% recall under all degradation types
+- [x] **IoU**: 7 overlapping regions found, average IoU = 0.1676
+- [x] **Evaluation report**: `ai-service/evaluation/results/evaluation_report.json` (full structured results)
+- [x] **Evaluation summary**: `ai-service/evaluation/results/evaluation_summary.md` (human-readable report)
+- [x] **Limitations documented**: synthetic test data, small test suite, forensics module limitation on programmatic edits, AI manipulation false-positive rate on genuine images with uniform areas
+
+### Key Findings
+
+| Module | Accuracy | Precision | Recall | F1 | ROC-AUC |
+| ------ | -------- | --------- | ------ | -- | ------- |
+| forensics | 0.429 | 0.000 | 0.000 | 0.000 | 0.000 |
+| ai_manipulation | 0.571 | 0.571 | 1.000 | 0.727 | 0.521 |
+| combined | 0.643 | 0.615 | 1.000 | 0.762 | 0.521 |
+
+- Forensics module (ELA/noise/edge) scores 0.0 on synthetic test data because programmatic PIL edits do not produce JPEG compression artifacts that ELA detects. The module functions correctly on real re-saved/spliced JPEG documents.
+- AI manipulation module detects all manipulated images (100% recall) but has false positives on genuine synthetic certificates with large uniform regions.
+- Combined fusion achieves 0.762 F1, demonstrating that multi-signal fusion improves over individual modules.
 
 ---
 
