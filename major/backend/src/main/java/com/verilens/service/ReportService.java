@@ -248,7 +248,7 @@ public class ReportService {
                     if (!explanations.isEmpty()) {
                         y = writeSubHeader(cs, helveticaBold, "Explanations", margin, y);
                         for (String exp : explanations) {
-                            y = writeWrappedText(cs, helvetica, "??? " + exp, margin, y, width, 11);
+                            y = writeWrappedText(cs, helvetica, 11f, "- " + exp, margin, y, width, 13f);
                         }
                         y -= 5;
                     }
@@ -453,7 +453,7 @@ public class ReportService {
         try {
             List<Object> list = objectMapper.readValue(json, List.class);
             return list.stream().map(Object::toString).toList();
-        } catch (Exception) {
+        } catch (Exception e) {
             return List.of();
         }
     }
@@ -462,7 +462,7 @@ public class ReportService {
         if (json == null) return Map.of();
         try {
             return objectMapper.readValue(json, Map.class);
-        } catch (Exception) {
+        } catch (Exception e) {
             return Map.of();
         }
     }
@@ -471,7 +471,7 @@ public class ReportService {
         if (json == null) return List.of();
         try {
             return objectMapper.readValue(json, List.class);
-        } catch (Exception) {
+        } catch (Exception e) {
             return List.of();
         }
     }

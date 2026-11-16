@@ -1,16 +1,25 @@
-FROM python:3.11-slim
+FROM python:3.11-alpine
 
-# Install Tesseract OCR engine + poppler (PDF page rendering)
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install Tesseract OCR engine + poppler (PDF page rendering) via apk
+# Alpine repos are not blocked by common corporate proxies
+RUN apk add --no-cache \
     tesseract-ocr \
-    tesseract-ocr-eng \
+    tesseract-ocr-data-eng \
     poppler-utils \
-    && rm -rf /var/lib/apt/lists/*
+    # Build deps for numpy / opencv
+    gcc \
+    g++ \
+    musl-dev \
+    linux-headers \
+    cmake \
+    make \
+    && pip install --no-cache-dir --upgrade pip
 
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && apk del gcc g++ musl-dev linux-headers cmake make
 
 COPY app ./app
 

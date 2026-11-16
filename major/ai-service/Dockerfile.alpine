@@ -1,0 +1,26 @@
+FROM python:3.11-alpine
+
+# Install Tesseract OCR engine + poppler (PDF page rendering) via apk
+RUN apk add --no-cache \
+    tesseract-ocr \
+    tesseract-ocr-data-eng \
+    poppler-utils \
+    # Build dependencies for some Python packages
+    gcc \
+    musl-dev \
+    linux-headers
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Remove build dependencies to keep image small
+RUN apk del gcc musl-dev linux-headers
+
+COPY app ./app
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+

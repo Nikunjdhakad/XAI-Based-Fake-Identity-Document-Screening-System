@@ -31,8 +31,8 @@ public class AiServiceClient {
     public AiServiceClient(AiServiceConfig config, RestTemplateBuilder builder) {
         this.config = config;
         this.restTemplate = builder
-                .connectTimeout(Duration.ofSeconds(10))
-                .readTimeout(Duration.ofSeconds(config.getTimeoutSeconds()))
+                .setConnectTimeout(Duration.ofSeconds(10))
+                .setReadTimeout(Duration.ofSeconds(config.getTimeoutSeconds()))
                 .build();
     }
 
